@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#define STACK_SIZE 256
+#include "opcodes.h"
+#define STACK_SIZE 1024
 
 typedef struct
 {
@@ -16,18 +16,6 @@ typedef struct
 	uint8_t* program;
 }stack_t;
 
-typedef enum
-{
-	OP_UNKNOWN,
-	OP_PUSH,
-	OP_POP,
-	OP_ADD,
-	OP_SUB,
-	OP_DIV,
-	OP_MUL,
-	OP_RSH,
-	OP_LSH
-}opcode_t;
 
 // stack_t VM = {0, 0};
 
@@ -122,6 +110,72 @@ void left_shift(stack_t* VM)
 	push(VM, num << 1);
 }
 
+void inc(stack_t *VM)
+{
+	if(VM->sp < 1)
+	{
+		printf("Cannot execute increment. Not enough operands.\n");
+		return;
+	}
+	int32_t a = pop(VM);
+	a++;
+	push(VM, a);
+}
+
+void dec(stack_t *VM)
+{
+	if(VM->sp < 1)
+	{
+		printf("Cannot execute decrement. Not enough operands.\n");
+		return;
+	}
+	int32_t a = pop(VM);
+	a--;
+	push(VM, a);
+}
+
+void dup(stack_t *VM)
+{
+	if(VM->sp < 1)
+	{
+		printf("Cannot execute duplication. Not enough operands.\n");
+		return;
+	}
+	int32_t a = pop(VM);
+	push(VM, a);
+	push(VM, a);
+}
+
+void swp(stack_t *VM)
+{
+	if(VM->sp < 2)
+	{
+		printf("Cannot execute swap. Not enough operands.\n");
+		return;
+	}
+	int32_t a = pop(VM);
+	int32_t b = pop(VM);
+	push(VM, a);
+	push(VM, b);
+}
+
+void peek(stack_t* VM)
+{
+	if(VM->sp < 1)
+	{
+		printf("Cannot peek. Not enough operands.\n");
+		return;
+	}
+	int32_t a = pop(VM);
+	push(VM, a);
+	printf("TOP: %d\n", a);
+}
+
+void jmp(stack_t *VM, uint32_t addr)
+{
+	VM->PC = addr;
+}
+
 int only_digits(char* str)
 {
 	if(str == NULL || *str == '\0')
@@ -153,7 +207,7 @@ void exec_opcode_REPL(opcode_t opcode, stack_t* VM, char* tkn)
 {
 	switch(opcode)
 	{
-		case OP_PUSH:
+		case OP_PSH:
 		{
 			tkn = strtok(NULL, " \n");
 			printf("current tkn: %s\n", tkn);
@@ -193,6 +247,7 @@ void exec_opcode_REPL(opcode_t opcode, stack_t* VM, char* tkn)
 			divis(VM);
 			return;
 		}
+
 		default:
 			printf("UNKNOWN OPCODE: %s\n", tkn);
 			break;
@@ -204,9 +259,9 @@ void parse_command(stack_t* VM, char* str)
 	char* tkn = strtok(str, " \n");
 	opcode_t opcode = OP_UNKNOWN;
 
-	if(!strcmp(tkn, "PUSH"))
+	if(!strcmp(tkn, "PSH"))
 	{
-		opcode = OP_PUSH;
+		opcode = OP_PSH;
 	}
 	else if(!strcmp(tkn, "POP"))
 	{
@@ -245,10 +300,10 @@ void exec_opcodes(stack_t *VM)
 	while(VM->PC < VM->size)
 	{
 		
-		printf("prog[PC]: 0x%X\n", VM->program[VM->PC]);
+		printf("prog[0x%X]: 0x%X\n", VM->PC, VM->program[VM->PC]);
 		switch(VM->program[VM->PC])
 		{
-			case OP_PUSH:
+			case OP_PSH:
 			{
 				VM->PC++;
 				int32_t int_to_push = (VM->program[VM->PC]) | (VM->program[VM->PC + 1] << 8) | (VM->program[VM->PC + 2] << 16) | (VM->program[VM->PC + 3]  << 24);
@@ -296,6 +351,74 @@ void exec_opcodes(stack_t *VM)
 			{
 				VM->PC++;
 				left_shift(VM);
+				break;
+			}
+			case OP_JMP:
+			{
+				VM->PC++;
+				int32_t addr = (VM->program[VM->PC]) | (VM->program[VM->PC + 1] << 8) | (VM->program[VM->PC + 2] << 16) | (VM->program[VM->PC + 3]  << 24);
+				VM->PC += 4;
+				jmp(VM, addr);
+				break;
+			}
+			case OP_JNZ:
+			{
+				VM->PC++;
+				int isnt_z = pop(VM);
+				if(isnt_z){
+					int32_t addr = (VM->program[VM->PC]) | (VM->program[VM->PC + 1] << 8) | (VM->program[VM->PC + 2] << 16) | (VM->program[VM->PC + 3]  << 24);
+					VM->PC += 4;
+					jmp(VM, addr);
+				}
+				else
+				{
+					VM->PC += 4;
+				}
+				break;
+			}
+			case OP_JZ:
+			{
+				VM->PC++;
+				int isnt_z = pop(VM);
+				if(!isnt_z){
+					int32_t addr = (VM->program[VM->PC]) | (VM->program[VM->PC + 1] << 8) | (VM->program[VM->PC + 2] << 16) | (VM->program[VM->PC + 3]  << 24);
+					VM->PC += 4;
+					jmp(VM, addr);
+				}
+				else
+				{
+					VM->PC += 4;
+				}
+				break;
+			}
+			case OP_INC:
+			{
+				VM->PC++;
+				inc(VM);
+				break;
+			}
+			case OP_DEC:
+			{
+				VM->PC++;
+				dec(VM);
+				break;
+			}
+			case OP_DUP:
+			{
+				VM->PC++;
+				dup(VM);
+				break;
+			}
+			case OP_SWP:
+			{
+				VM->PC++;
+				swp(VM);
+				break;
+			}
+			case OP_PEK:
+			{
+				VM->PC++;
+				peek(VM);
 				break;
 			}
 			default:
