@@ -4,20 +4,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "opcodes.h"
 
 typedef struct{
 	char** tokens;
 	size_t capacity;
 	size_t size;
-	char* init_str;	
+	char* init_str;
 }tokenizer_t;
 
 typedef struct
 {
-	char* lable_name;
+	char lable_name[32];
 	uint32_t addr;
-}lable;
+}lable_t;
 
+typedef struct
+{
+	lable_t lables[100];
+	int size;
+}lable_table_t;
+
+lable_table_t labl_tabl = {0};
 // typedef struct{
 // 	char* input;
 // 	char* output;
@@ -29,19 +37,6 @@ typedef struct
 // 	OUTPUT,
 // 	INPUT
 // }cl_exp_t;
-
-typedef enum
-{
-	OP_UNKNOWN,
-	OP_PSH,
-	OP_POP,
-	OP_ADD,
-	OP_SUB,
-	OP_DIV,
-	OP_MUL,
-	OP_RSH,
-	OP_LSH
-}token_t;
 
 
 // void parse_commands(char** argv, int argc, cml_t *tkn)
@@ -128,6 +123,39 @@ int only_digits(char* str)
 	return 1;	
 }
 
+int jmp_in_lables(char* tkn)
+{
+	char* tkn_lbl = malloc(32);
+	tkn_lbl = strdup(tkn);
+	
+	for(int i = 0; i < labl_tabl.size; i++)
+	{
+
+		if(!strcmp(labl_tabl.lables[i].lable_name, tkn_lbl))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+int lable_in_lables(char* tkn)
+{
+	char* tkn_lbl = malloc(32);
+	tkn_lbl = strdup(tkn);
+	if(tkn_lbl[strlen(tkn_lbl)-1] == ':')
+		tkn_lbl[strlen(tkn_lbl)-1] = '\0';
+	for(int i = 0; i < labl_tabl.size; i++)
+	{
+
+		if(!strcmp(labl_tabl.lables[i].lable_name, tkn_lbl))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
 int output_str(uint8_t** output, tokenizer_t *tknzr)
 {
 	char** tkn_str = tknzr->tokens;
@@ -148,7 +176,27 @@ int output_str(uint8_t** output, tokenizer_t *tknzr)
 				output = realloc(*output, size_for_out);
 			}
 			*ptr++ = OP_PSH;
-			i++;
+			char* next_token = tkn_str[i+1];
+			if(!only_digits(next_token))
+			{
+				printf("%s is not a number, aborting\n", next_token);
+				free(*output);
+				return 0;
+			}
+			if((ptr - *output) >= size_for_out - 5)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			int int_tkn = atoi(next_token);
+			printf("TKN_NUM = %d\n", int_tkn);
+			for(int k = 0; k < 4; k++)
+			{
+				*ptr =  int_tkn & 0xFF;
+				int_tkn >>= 8;			
+				ptr++;
+			}
+			i += 2;
 			continue;
 		}
 		if(!strcmp(tkn, "POP"))
@@ -228,27 +276,154 @@ int output_str(uint8_t** output, tokenizer_t *tknzr)
 			i++;
 			continue;
 		}
-		
-		if(only_digits(tkn))
+		if(!strcmp(tkn, "JMP"))
 		{
 			if((ptr - *output) >= size_for_out - 5)
 			{
 				size_for_out *= 2;
 				output = realloc(*output, size_for_out);
 			}
-			int int_tkn = atoi(tkn);
-			printf("TKN_NUM = %d\n", int_tkn);
+			*ptr++ = OP_JMP;
+			char* next_token = tknzr->tokens[i+1]; 
+			int idx = jmp_in_lables(next_token);
+			if(idx == -1)
+			{
+				printf("%s is not a valid lable, aborting\n", next_token);
+				free(*output);
+				return 0;
+			}
+			uint32_t addr = labl_tabl.lables[idx].addr;
+			
+			printf("ADDR = %d\n", addr);
 			for(int k = 0; k < 4; k++)
 			{
-				*ptr = (int_tkn >> k*8) & 0xFF; 
-			
-
+				*ptr = addr & 0xFF;
+				addr >>= 8;
 				ptr++;
 			}
+			
+			i += 2;
+			continue;
+		}
+		if(!strcmp(tkn, "JNZ"))
+		{
+			if((ptr - *output) >= size_for_out - 5)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_JNZ;
+			char* next_token = tknzr->tokens[i+1]; 
+			int idx = jmp_in_lables(next_token);
+			if(idx == -1)
+			{
+				printf("%s is not a valid lable, aborting\n", next_token);
+				free(*output);
+				return 0;
+			}
+			uint32_t addr = labl_tabl.lables[idx].addr;
+			
+			printf("ADDR = %d\n", addr);
+			for(int k = 0; k < 4; k++)
+			{
+				*ptr = addr & 0xFF;
+				addr >>= 8;
+				ptr++;
+			}
+			
+			i += 2;
+			continue;
+		}
+		if(!strcmp(tkn, "JZ"))
+		{
+			if((ptr - *output) >= size_for_out - 5)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_JZ;
+			char* next_token = tknzr->tokens[i+1]; 
+			int idx = jmp_in_lables(next_token);
+			if(idx == -1)
+			{
+				printf("%s is not a valid lable, aborting\n", next_token);
+				free(*output);
+				return 0;
+			}
+			uint32_t addr = labl_tabl.lables[idx].addr;
+			
+			printf("ADDR = %d\n", addr);
+			for(int k = 0; k < 4; k++)
+			{
+				*ptr = addr & 0xFF;
+				addr >>= 8;
+				ptr++;
+			}
+			
+			i += 2;
+			continue;
+		}
+		if(!strcmp(tkn, "DUP"))
+		{
+			if((ptr - *output) >= size_for_out - 1)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_DUP;
 			i++;
 			continue;
 		}
-
+		if(!strcmp(tkn, "SWP"))
+		{
+			if((ptr - *output) >= size_for_out - 1)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_SWP;
+			i++;
+			continue;
+		}
+		if(!strcmp(tkn, "INC"))
+		{
+			if((ptr - *output) >= size_for_out - 1)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_INC;
+			i++;
+			continue;
+		}
+		if(!strcmp(tkn, "DEC"))
+		{
+			if((ptr - *output) >= size_for_out - 1)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_DEC;
+			i++;
+			continue;
+		}
+		if(!strcmp(tkn, "PEK"))
+		{
+			if((ptr - *output) >= size_for_out - 1)
+			{
+				size_for_out *= 2;
+				output = realloc(*output, size_for_out);
+			}
+			*ptr++ = OP_PEK;
+			i++;
+			continue;
+		}
+		if(lable_in_lables(tkn) != -1)
+		{
+			i++;
+			continue;
+		}
+		
 		printf("Invalid Operand/Opcode/Mnemonic %s", tkn_str[i]);
 		free(*output);
 		return 0;
@@ -258,6 +433,36 @@ int output_str(uint8_t** output, tokenizer_t *tknzr)
 		printf("0x%X\n", (*output)[i]);
 	}
 	return ptr - *output;
+}
+
+void find_lables(tokenizer_t *tknzr)
+{
+	uint32_t addr = 0;
+	for(int idx = 0; idx < tknzr->size; idx++)
+	{
+		char* tkn = tknzr->tokens[idx];
+		if(tkn[strlen(tkn)-1] == ':')
+		{
+			strcpy(labl_tabl.lables[labl_tabl.size].lable_name, tkn);
+			labl_tabl.lables[labl_tabl.size].lable_name[strlen(labl_tabl.lables[labl_tabl.size].lable_name)-1] = '\0'; 
+			labl_tabl.lables[labl_tabl.size].addr = addr;
+			labl_tabl.size++;
+		}
+		else if(!strcmp(tkn, "PSH"))
+		{
+			addr += 5;
+			idx++;
+		}else if(!strcmp(tkn, "JMP") || !strcmp(tkn, "JNZ") || !strcmp(tkn, "JZ"))
+		{
+			addr += 5;
+			idx++;
+		}
+		else
+		{
+			addr++;
+		}
+
+	}
 }
 
 int main(int argc, char** argv)
@@ -279,12 +484,25 @@ int main(int argc, char** argv)
 	init_str[act_read] = '\0';
 	
 	uint8_t *bytecode_res;
+	char* ptr = init_str;
+	
+	while(*ptr)
+	{
+		*ptr = toupper(*ptr);
+		ptr++;
+	}
+
 	tokenizer_t tknzr = init_tkn(init_str);
 	tokenize(&tknzr);
 
 	for(int i = 0; i < tknzr.size; i++)
 	{
 		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr.tokens[i], i == tknzr.size-1 ? "\"]\n" : "\",");
+	}
+	find_lables(&tknzr);
+	for(int i = 0; i < labl_tabl.size; i++)
+	{
+		printf("%s%s%s", i == 0 ? "[\"" : " \"", labl_tabl.lables[i].lable_name, i == labl_tabl.size-1 ? "\"]\n" : "\",");
 	}
 	size_t sizeofprog = output_str(&bytecode_res, &tknzr); 
 	if(!sizeofprog)
