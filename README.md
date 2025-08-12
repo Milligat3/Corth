@@ -21,6 +21,17 @@ LSH
 
 RSH // Possibly will change to SHL/SHR
 
+PEK // PEEK
+
+JMP <lable>
+
+JZ/JNZ <lable>
+
+DUP
+
+SWP
+
+INC/DEC
 
 to compile simply use 
 
