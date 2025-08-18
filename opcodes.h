@@ -13,9 +13,15 @@ typedef enum
 	OP_JMP,
 	OP_JNZ,
 	OP_JZ,
+	OP_JSR,
+	OP_RTS,
 	OP_DUP,
 	OP_SWP,
 	OP_INC,
 	OP_DEC,
-	OP_PEK
+	OP_OUT,
+	OP_STR,
+	OP_WRD,
+	OP_RDD,
+	OP_HLT
 }opcode_t;
