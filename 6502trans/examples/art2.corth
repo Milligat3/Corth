@@ -1,0 +1,75 @@
+PSH 0
+PSH 0
+PSH 1
+WRD
+
+PSH 2
+PSH 1
+PSH 1
+WRD
+
+PSH 3
+
+LOOP:
+	
+	DUP
+	JSR WRITE
+	JMP LOOP
+HLT
+
+WRITE:
+	PSH 0
+	PSH 1
+	RDD
+	PSH 1
+	PSH 1
+	RDD
+ACTUAL_WRITE:
+	WRD
+	
+	PSH 0
+	PSH 1
+	RDD
+	
+	INC
+
+
+	PSH 0
+	PSH 1
+	WRD
+
+	JZ INC_HI
+
+
+	RTS
+INC_HI:
+	
+	PSH 1
+	PSH 1
+	RDD
+
+	INC
+	DUP
+	PSH 6
+	SUB
+
+	JZ RESET_HI
+
+	PSH 1
+	PSH 1
+	WRD
+
+	RTS
+
+RESET_HI:
+	
+	POP
+
+	PSH 2
+
+	
+	PSH 1
+	PSH 1
+	WRD
+
+	RTS

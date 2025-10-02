@@ -1,0 +1,53 @@
+PSH 0
+WRD $10
+
+PSH 2
+WRD $11
+
+PSH 255
+PSH 1
+LOOP:
+	DUP
+	JSR WRITE
+	SWP
+	DEC
+	SWP
+	PSH 1
+	WRD $2001
+	JMP LOOP
+HLT
+
+
+WRITE:
+	RDD $10
+	RDD $11
+	WRD
+	
+	RDD $10
+	INC
+	DUP
+
+	WRD $10
+
+	JZ INC_HI
+	RTS
+
+INC_HI:
+	
+	RDD $11
+	INC
+	DUP
+
+	SUB 6
+	JZ RESET_HI
+
+	WRD $11
+	RTS
+
+RESET_HI:
+	PSH 2
+	WRD $11
+	
+	POP
+
+	RTS
