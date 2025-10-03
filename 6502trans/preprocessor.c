@@ -63,9 +63,15 @@ void debug_macro(func_macro_t fm)
 	}
 }
 
+// char* get_slice(char* string, char* end)
+// {
+
+// 	return NULL;
+// }
 
 void tokenize_macro(tokenizer_t* tknzr, char** string)
 {
+	printf("I'm fuckin' macros!\n");
 	preprocessor_t *prep = &tknzr->prep; 
 	char* start = *string;
 	start += sizeof("@MACRO");
@@ -89,10 +95,16 @@ void tokenize_macro(tokenizer_t* tknzr, char** string)
 	}
 	if(new_macro < macro_end && new_macro > start && new_macro != NULL)
 	{
-		printf("Rule 1. No definitions of macros inside macros.\n");
-		free_tkn(tknzr);
-		exit(1);
+		macro_end += sizeof("@MACRO_END");
+		macro_end = strstr(macro_end, "@MACRO_END");
+		if(!macro_end)
+		{
+			printf("Definition of macro inside a macro that results in @MACRO_END getting lost.\n");
+			free_tkn(tknzr);
+			exit(1);
+		}
 	}
+
 	while(*start && isspace(*start)) start++;
 	end = start;
 	while(*end && !isspace(*end) && *end != '(') end++;
@@ -101,6 +113,7 @@ void tokenize_macro(tokenizer_t* tknzr, char** string)
 	strncpy(name, start, end - start);
 	name[end - start] = '\0';
 	strcpy(fm.name, name);
+
 	start = end;
 	while(*end && *(end-1) != ')')
 	{
@@ -126,29 +139,33 @@ void tokenize_macro(tokenizer_t* tknzr, char** string)
 		
 		start = end;
 	}
+	start = end;
 	printf("Args:\n");
 	for(size_t i = 0; i < fm.arg_count; i++)
 	{
 		printf("%s, ", fm.args[i]);
 	}
 	printf("\n");
-	char* end_str = strstr(start, "@MACRO_END") + sizeof("@MACRO_END");
+	char* end_str = strstr(start, "@MACRO_END");
 	size_t size_of_body = end_str - start;
 	char* new_str = malloc(size_of_body+1);
-	strncpy(new_str, start, size_of_body - sizeof("@MACRO_END"));
-	new_str[size_of_body - sizeof("@MACRO_END")] = '\0';
+	strncpy(new_str, start, size_of_body);
+	new_str[size_of_body] = '\0';
 	tokenizer_t tknzr2 = init_tkn(new_str);
-	
+	parse_macros(&tknzr2);
 	tokenize(&tknzr2);
-	fm.body = tknzr2.tokens;
+	preprocess(&tknzr2);
+	printf("We fell here.\n");
+	memcpy(fm.body, tknzr2.tokens, tknzr2.size);
 	fm.tkn_count = tknzr2.size;
 	fm.tkn_cap = tknzr2.capacity;
-	
 	debug_macro(fm);
 	push_macro(prep, fm);
-	free(name);
 
-	*string = end_str;
+	free(name);
+	free_tkn(&tknzr2);
+
+	*string = end_str + sizeof("@MACRO_END");
 	printf("%s\n", *string);
 
 }
@@ -210,10 +227,11 @@ void tokenize_define(tokenizer_t* tknzr, char** string)
 void parse_macros(tokenizer_t* tknzr)
 {
 	tknzr->prep = init_preproc();
-	tokenizer_t tknzr_tmp = init_tkn(NULL);
+	// tokenizer_t tknzr_tmp = init_tkn(NULL);
 	char* string = tknzr->init_str;
-	tknzr_tmp.init_str = malloc(strlen(string));
-	char* string_tmp = tknzr_tmp.init_str;
+	char* s_tmp = malloc(strlen(string));
+	char* string_tmp = s_tmp; 
+	size_t count = 0;
 	while(*string)
 	{
 		if(strstr(string, "@MACRO ") == string)
@@ -236,21 +254,31 @@ void parse_macros(tokenizer_t* tknzr)
 		else
 		{
 			*string_tmp = *string;
-			string_tmp++; string++;
+			string_tmp++; string++; count++;
 		}
 	}
-	tknzr_tmp.prep = tknzr->prep;
-	free_tkn(tknzr);
-	*tknzr = tknzr_tmp;
-	// free(string);
+	s_tmp[count] = '\0';
+	printf("We've got here!\n");
+	// free_tkn(tknzr);
+	free(tknzr->init_str);
+	tknzr->init_str = s_tmp;
+	
 }
 void preprocess(tokenizer_t *tknzr)
 {
 	tokenizer_t tknzr_tmp = init_tkn(NULL);
-	// tknzr->prep = init_preproc();
+
+	printf("We fell here!\n");
+    
+    if (tknzr_tmp.tokens == NULL) {
+        printf("FATAL: Cannot allocate tokens in preprocess!\n");
+        exit(1);
+    }
 	preprocessor_t prep = tknzr->prep;
 
-	
+	if(prep.const_count == 0 && prep.macro_count == 0)
+		return;
+	// tknzr->prep = init_preproc();
 
 	for(size_t i = 0; i < prep.const_count; i++)
 	{
@@ -343,7 +371,7 @@ void preprocess(tokenizer_t *tknzr)
 					push_token(&tknzr_tmp, tknzr->tokens[j]);
 				}
 			}
-			free(tknzr->tokens);
+			free_tkn(tknzr);
 			*tknzr = tknzr_tmp;
 			tknzr_tmp = init_tkn(NULL);
 		}

@@ -24,6 +24,7 @@ void push_str(tokenizer_t* tknzr, char* tkn)
 		tknzr->tokens = realloc(tknzr->tokens, tknzr->capacity*sizeof(token_t));
 	}
 	size_t size = strlen(tkn);
+
 	if(size > 32)
 	{
 		free_tkn(tknzr);
@@ -49,21 +50,13 @@ void push_token(tokenizer_t* tknzr, token_t tkn)
 
 tokenizer_t init_tkn(char* init_str)
 {
-	tokenizer_t tknzr = {.tokens = NULL, .capacity = 256, .size = 0, .init_str = init_str};
-	tknzr.tokens = malloc(tknzr.capacity*sizeof(token_t));
+	tokenizer_t tknzr = {.tokens = NULL, .capacity = 16, .size = 0, .init_str = init_str};
+	printf("I fell. Asked for %zu bytes and fell somehow.\n", tknzr.capacity*sizeof(token_t));
+	tknzr.tokens = calloc(tknzr.capacity, sizeof(token_t));
+	if (tknzr.tokens) {
+        memset(tknzr.tokens, 0, tknzr.capacity * sizeof(token_t));
+    }
 	return tknzr;
-}
-
-void strip_token(char** token)
-{
-	if(**token == '(')
-	{
-		(*token)++;
-	}
-	if((*token)[strlen(*token) - 1] == ',' || (*token)[strlen(*token) - 1] == ')')
-	{
-		(*token)[strlen(*token) - 1] = '\0';
-	}
 }
 
 int is_delim(char n)
@@ -96,10 +89,17 @@ void tokenize(tokenizer_t* tknzr)
 			}
 		}
 		int cnt = end - start;
+		if(cnt >= 32)
+		{
+			printf("Tokens this big are not allowed!\n");
+			free_tkn(tknzr);
+			exit(1);
+		}
+		char token[32] = {0};
 		
-		char* token = malloc(cnt+1);
 		strncpy(token, start, cnt);
 		token[cnt] = '\0';
+		
 		// strip_token(&token);
 		// if(cnt == 0 || strlen(token) == 0 || *start == '\0')
 		// {
@@ -119,4 +119,5 @@ void tokenize(tokenizer_t* tknzr)
 		// tknzr->init_str = start;
 		push_str(tknzr, token);
 	}
+	free(tknzr->init_str);
 }

@@ -1,0 +1,90 @@
+
+@def addr_1 $10
+@def addr_2 $11
+
+@macro WRD_WORD(value, addr1, addr2)
+	PSH value
+	WRD addr2
+	WRD addr1
+@macro_end
+
+@macro DRAW_SPRITE_MACRO(value, addr1, addr2)
+	JSR PUSH_ALL
+	WRD_WORD(value, addr1, addr2)
+	JSR DRAW_SPRITE
+@macro_end
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+DRAW_SPRITE_MACRO($200, addr_1, addr_2)
+DRAW_SPRITE_MACRO($208, addr_1, addr_2)
+DRAW_SPRITE_MACRO($210, addr_1, addr_2)
+DRAW_SPRITE_MACRO($218, addr_1, addr_2)
+
+TRAP: JMP TRAP
+HLT
+
+PUSH_ALL:
+ASM{
+	ldy #$7 
+PUSH_LOOP:
+	lda sprite, Y
+	jsr OP_PUSH
+	dey
+	cpy #$FF
+	bne PUSH_LOOP
+}
+	RTS
+
+DRAW_SPRITE:
+	JSR WR_PROL
+	POP
+	POP
+ASM {
+	cpx #$00
+	beq HALT
+}
+	JMP DRAW_SPRITE
+HALT:
+	DRAW()
+	RTS
+
+WR_PROL:
+	PSH 7
+WRITE:
+	SWP RSH SWP
+	
+	JCC DECR
+	DUP
+	PSH $FF
+	SWP
+	RDD addr_1
+	ADD
+	RDD addr_2
+	WRD
+	
+DECR:
+	
+	DEC
+	DUP
+	SUB $FF
+	JNZ WRITE
+RETURN:
+ASM {
+	clc
+	lda $10
+	adc #$20
+	sta $10
+	lda $11
+	adc #$0
+	sta $11
+}
+	
+	RTS
+
+ASM {
+sprite: .byte $11, $22, $44, $88, $11, $22, $44, $88
+}

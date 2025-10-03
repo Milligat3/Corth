@@ -1,0 +1,29 @@
+@macro CHECK_ROT(a, b, c)
+
+@macro DUP_WRITE(addr)
+	DUP
+	WRD addr
+@macro_end
+
+	PSH a
+	PSH b
+	PSH c
+	ROT
+	DUP_WRITE($300)
+	ROT
+	DUP_WRITE($301)
+	ROT
+	DUP_WRITE($302)
+@macro_end
+
+
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+
+CHECK_ROT(1, 2, 3)
+DRAW()
+
