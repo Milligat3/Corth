@@ -414,6 +414,16 @@ int check_syntax(tokenizer_t *tknzr)
 				push_token(tknzr2, *tkn);
 				continue;
 			}
+			case TKN_ROT:
+			{
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_OVER:
+			{
+				push_token(tknzr2, *tkn);
+				continue;
+			} 
 			case TKN_ASM:
 			{
 				push_token(tknzr2, *tkn);

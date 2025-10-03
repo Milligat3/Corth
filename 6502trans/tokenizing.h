@@ -53,7 +53,9 @@ typedef enum
 	TKN_GE_IMM,
 	TKN_LT_IMM,
 	TKN_LE_IMM,
-	TKN_EQ_IMM
+	TKN_EQ_IMM,
+	TKN_ROT,
+	TKN_OVER
 }token_type;
 
 

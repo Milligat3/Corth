@@ -254,6 +254,16 @@ int output_str(FILE* output, tokenizer_t *tknzr)
 					inx\n	jsr OP_LE\n", tkn.val.num[0]);
 				continue;
 			}
+			case TKN_ROT:
+			{
+				fprintf(output, "	jsr OP_ROT\n");
+				continue;
+			}
+			case TKN_OVER:
+			{
+				fprintf(output, "	jsr OP_OVER\n");
+				continue;
+			}
 			case TKN_ASM:
 			{
 				fprintf(output, "%s\n", asm_table.table[tkn.val.num[0]]);
@@ -447,6 +457,35 @@ LOG_PSH_0:\n\
 	lda #$0\n\
 	sta $700, X\n\
 	inx\n\
-	rts\n");
+	rts\n\
+OP_OVER:\n\
+	dex\n\
+	dex\n\
+	lda $700, X\n\
+	inx\n\
+	inx\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
+OP_ROT:\n\
+	dex\n\
+	lda $700, X\n\
+	pha\n\
+	dex\n\
+	lda $700, X\n\
+	pha\n\
+	dex\n\
+	lda $700, X\n\
+	tay\n\
+	pla\n\
+	sta $700, X\n\
+	inx\n\
+	pla\n\
+	sta $700, X\n\
+	inx\n\
+	tya\n\
+	sta $700, X\n\
+	inx\n\
+	rts");
 	return 1;
 }

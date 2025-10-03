@@ -203,6 +203,16 @@ void push_str_tkn(tokenizer_t* tknzr, token_t tkn_t)
 		tknzr->tokens[tknzr->size].type = TKN_LE;
 		goto inc;
 	}
+	if(!strcmp(tkn, "ROT"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_ROT;
+		goto inc;
+	}
+	if(!strcmp(tkn, "OVR"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_OVER;
+		goto inc;
+	}
 	if(!strcmp(tkn, "@DEF"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_DEF;
