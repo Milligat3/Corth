@@ -1,7 +1,7 @@
 #pragma once
 #include "tokenizing.h"
 #include <stdint.h>
-
+#include <stddef.h>
 typedef struct
 {
 	char label_name[32];

@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "preprocessor.h"
 #include "tokenizing.h"
-
+#include "utils.h"
 
 void push_token_into_macro(func_macro_t* macro, token_t tkn)
 {
@@ -69,41 +69,14 @@ void debug_macro(func_macro_t fm)
 // 	return NULL;
 // }
 
-void tokenize_macro(tokenizer_t* tknzr, char** string)
+void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 {
-	printf("I'm fuckin' macros!\n");
+	// printf("I'm fuckin' macros!\n");
 	preprocessor_t *prep = &tknzr->prep; 
-	char* start = *string;
-	start += sizeof("@MACRO");
-	if(start == NULL)
-		return;
+	char* start = string;
 	char* end = start;
 	char* name = NULL;
-	char* new_macro = strstr(start, "@MACRO ");
-	char* macro_end = strstr(start, "@MACRO_END");
-	// while((start = strstr(tknzr->init_str, "@MACRO")) != NULL){
-	// int arg_count = 0;
 	func_macro_t fm = {.tkn_count = 0, .tkn_cap = 256};
-	
-	// fm.body = malloc(fm.tkn_cap*sizeof(token_t));
-	
-	if(strstr(start, "@MACRO_END") == NULL)
-	{
-		printf("FUCKIN' HELL! NO END FOR MACRO? ABORTION!\n");
-		free_tkn(tknzr);
-		exit(1);
-	}
-	if(new_macro < macro_end && new_macro > start && new_macro != NULL)
-	{
-		macro_end += sizeof("@MACRO_END");
-		macro_end = strstr(macro_end, "@MACRO_END");
-		if(!macro_end)
-		{
-			printf("Definition of macro inside a macro that results in @MACRO_END getting lost.\n");
-			free_tkn(tknzr);
-			exit(1);
-		}
-	}
 
 	while(*start && isspace(*start)) start++;
 	end = start;
@@ -140,13 +113,13 @@ void tokenize_macro(tokenizer_t* tknzr, char** string)
 		start = end;
 	}
 	start = end;
-	printf("Args:\n");
-	for(size_t i = 0; i < fm.arg_count; i++)
-	{
-		printf("%s, ", fm.args[i]);
-	}
-	printf("\n");
-	char* end_str = strstr(start, "@MACRO_END");
+	// printf("Args:\n");
+	// for(size_t i = 0; i < fm.arg_count; i++)
+	// {
+	// 	printf("%s, ", fm.args[i]);
+	// }
+	// printf("\n");
+	char* end_str = macro_end;
 	size_t size_of_body = end_str - start;
 	char* new_str = malloc(size_of_body+1);
 	strncpy(new_str, start, size_of_body);
@@ -155,18 +128,18 @@ void tokenize_macro(tokenizer_t* tknzr, char** string)
 	parse_macros(&tknzr2);
 	tokenize(&tknzr2);
 	preprocess(&tknzr2);
-	printf("We fell here.\n");
-	memcpy(fm.body, tknzr2.tokens, tknzr2.size);
+	// printf("We fell here.\n");
+	fm.body = malloc(tknzr2.size*sizeof(token_t));
+	memcpy(fm.body, tknzr2.tokens, tknzr2.size*sizeof(token_t));
 	fm.tkn_count = tknzr2.size;
 	fm.tkn_cap = tknzr2.capacity;
 	debug_macro(fm);
 	push_macro(prep, fm);
 
 	free(name);
-	free_tkn(&tknzr2);
-
-	*string = end_str + sizeof("@MACRO_END");
-	printf("%s\n", *string);
+	free(tknzr2.tokens);
+	string = end_str + sizeof("@MACRO_END");
+	printf("%s\n", string);
 
 }
 
@@ -224,20 +197,86 @@ void tokenize_define(tokenizer_t* tknzr, char** string)
 	push_const(prep, cm);
 }
 
+typedef struct
+{
+    char* macro_start;
+    char* macro_end;
+}paren_t;
+
+
+void balance_macro(char** string, tokenizer_t *tknzr)
+{
+
+    paren_t paren;
+    int depth = 0;
+    char *stringptr = *string;
+    while(*stringptr)
+    {
+        if(stringptr == strstr(stringptr, "@MACRO "))
+        {
+            if(depth == 0)
+            {
+                stringptr += sizeof("@MACRO");
+                paren.macro_start = stringptr;
+            }
+            depth++;
+        }
+        if(stringptr == strstr(stringptr, "@MACRO_END"))
+        {
+            if(depth == 0)
+            {
+                printf("extra @MACRO_END\n");
+                free_tkn(tknzr);
+                exit(1);
+            }
+            else
+            {
+                depth--;
+                if(depth == 0)
+                {
+                    paren.macro_end = stringptr;
+                    
+                    printf("End of block\n");
+                    char* slice = str_slice(paren.macro_start, paren.macro_end);
+                    printf("Slice: %s\n", slice);
+                    tokenize_macro(tknzr, paren.macro_start, paren.macro_end);
+                    free(slice);
+                    stringptr += sizeof("@MACRO_END");
+    				*string = stringptr;
+    				return;                
+                }
+            }
+        }
+        // printf("Depth: %d\n", depth);
+        stringptr++;
+        
+    }
+    if(depth != 0)
+    {
+        printf("@MACRO AND @MACRO_END is unbalanced.\n");
+        free_tkn(tknzr);
+        exit(1);
+    }
+    *string = stringptr; 
+}
+
 void parse_macros(tokenizer_t* tknzr)
 {
 	tknzr->prep = init_preproc();
 	// tokenizer_t tknzr_tmp = init_tkn(NULL);
 	char* string = tknzr->init_str;
-	char* s_tmp = malloc(strlen(string));
+	char* s_tmp = malloc(strlen(string)+1);
 	char* string_tmp = s_tmp; 
 	size_t count = 0;
 	while(*string)
 	{
+		// if(strstr(string, "@MACRO ") == string)
+		// {
+		// 	// tokenize_macro(tknzr, &string);
+		// }
 		if(strstr(string, "@MACRO ") == string)
 		{
-			tokenize_macro(tknzr, &string);
-			// string = macro;
+			balance_macro(&string, tknzr);
 		}
 		if(strstr(string, "@DEF ") == string)
 		{
@@ -371,7 +410,7 @@ void preprocess(tokenizer_t *tknzr)
 					push_token(&tknzr_tmp, tknzr->tokens[j]);
 				}
 			}
-			free_tkn(tknzr);
+			free(tknzr->tokens);
 			*tknzr = tknzr_tmp;
 			tknzr_tmp = init_tkn(NULL);
 		}

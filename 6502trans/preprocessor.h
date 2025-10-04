@@ -1,5 +1,5 @@
 #include "tokenizing.h"
-
+#include <stddef.h>
 
 #define MAX_ITERATIONS_FOR_MACRO 100
 

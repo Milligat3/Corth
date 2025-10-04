@@ -96,7 +96,9 @@ int main(int argc, char** argv)
 	fseek(input, 0, SEEK_SET);
 	char* init_str = malloc(filesize+1);
 	size_t act_read = fread(init_str, 1, filesize, input);
+	
 	fclose(input);
+	
 	nob_log(NOB_INFO, "FILESIZE IS %zu\n", act_read);
 	init_str[act_read] = '\0';
 	

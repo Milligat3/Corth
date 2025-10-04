@@ -6,14 +6,22 @@
 #include <string.h>
 #include "tokenizing.h"
 #include "asmgen.h"
-
+#include "utils.h"
 
 
 
 void free_tkn(tokenizer_t* tkn)
 {
+      if(tkn->init_str)
+      {
 	free(tkn->init_str);
+	tkn->init_str = NULL;
+      }
+      if(tkn->tokens)
+      {
 	free(tkn->tokens);
+        tkn->tokens = NULL;
+      }
 }
 
 void push_str(tokenizer_t* tknzr, char* tkn)
@@ -51,7 +59,7 @@ void push_token(tokenizer_t* tknzr, token_t tkn)
 tokenizer_t init_tkn(char* init_str)
 {
 	tokenizer_t tknzr = {.tokens = NULL, .capacity = 16, .size = 0, .init_str = init_str};
-	printf("I fell. Asked for %zu bytes and fell somehow.\n", tknzr.capacity*sizeof(token_t));
+	// printf("I fell. Asked for %zu bytes and fell somehow.\n", tknzr.capacity*sizeof(token_t));
 	tknzr.tokens = calloc(tknzr.capacity, sizeof(token_t));
 	if (tknzr.tokens) {
         memset(tknzr.tokens, 0, tknzr.capacity * sizeof(token_t));
@@ -59,10 +67,6 @@ tokenizer_t init_tkn(char* init_str)
 	return tknzr;
 }
 
-int is_delim(char n)
-{
-	return n == '{' || n == '}' || n == '(' || n == ')' || n == ',';
-}
 
 void tokenize(tokenizer_t* tknzr)
 {

@@ -232,7 +232,7 @@ void push_str_tkn(tokenizer_t* tknzr, token_t tkn_t)
 	{
 		tkn++;
 		unsigned long long int to_p = strtoul(tkn, NULL, 16);
-		tkn = itoa(to_p, tkn, 10);
+		sprintf(tkn, "%llu", to_p);
 		size = strlen(tkn);
 		strncpy(tknzr->tokens[tknzr->size].tkn_str, tkn, size);
 		tknzr->tokens[tknzr->size].tkn_str[size] = '\0';
@@ -258,6 +258,6 @@ void lex_anal(tokenizer_t *tknzr)
 		token_t tkn = tknzr->tokens[i];
 		push_str_tkn(&tknzr_tmp, tkn);
 	}
-	free_tkn(tknzr);
+	free(tknzr->tokens);
 	*tknzr = tknzr_tmp;
 }

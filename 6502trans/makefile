@@ -5,7 +5,7 @@ CFLAGS := -ggdb -Wall -Werror -Wextra -Wpedantic
 
 all: $(TARGET)
 
-$(TARGET): CorthCOMP.o labels.o optimize.o syntax_checker.o codgen.o tokenizing.o asmgen.o preprocessor.o lexical_analysys.o
+$(TARGET): CorthCOMP.o labels.o optimize.o syntax_checker.o codgen.o tokenizing.o asmgen.o preprocessor.o lexical_analysys.o utils.o
 	$(CC) $^ -o $@
 
 CorthCOMP.o: CorthCOMP.c optimize.h syntax_checker.h codgen.h tokenizing.h asmgen.h
@@ -33,6 +33,9 @@ preprocessor.o: preprocessor.c preprocessor.h tokenizing.h
 	$(CC) $< -c -o $@ $(CFLAGS)
 
 lexical_analysys.o: lexical_analysys.c lexical_analysys.h tokenizing.h
+	$(CC) $< -c -o $@ $(CFLAGS)
+
+utils.o: utils.c
 	$(CC) $< -c -o $@ $(CFLAGS)
 clean:
 	rm -rf *.o $(TARGET)

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <stddef.h>
 label_table_t labl_tabl = {0};
 
 int jmp_in_labels(char* tkn)
