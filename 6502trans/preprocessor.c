@@ -1,6 +1,7 @@
 
 
 #include <ctype.h>
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,7 +98,7 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 		if(*end == ')' || *end == ',') end++;
 		if(end - start < 2){
 			start++;
-			break;
+			continue;
 		}
 		char* arg_name = malloc(32);
 		if(end - start > 32)
@@ -303,6 +304,19 @@ void parse_macros(tokenizer_t* tknzr)
 	tknzr->init_str = s_tmp;
 	
 }
+
+
+int is_macro(preprocessor_t prep, token_t tkn)
+{
+	for(size_t i = 0; i < prep.macro_count; i++)
+	{
+		if(!strcmp(tkn.tkn_str, prep.macro_table[i].name))
+			return i;
+	}
+	return -1;
+}
+
+
 void preprocess(tokenizer_t *tknzr)
 {
 	tokenizer_t tknzr_tmp = init_tkn(NULL);
@@ -345,75 +359,78 @@ void preprocess(tokenizer_t *tknzr)
 	while(!i_see_no_changes && iterations < MAX_ITERATIONS_FOR_MACRO){
 		i_see_no_changes = 1;
 
-		for(size_t i = 0; i < prep.macro_count; i++)
+		for(size_t j = 0; j < tknzr->size; j++)
 		{
-			func_macro_t fm = prep.macro_table[i];
-			printf("Macro name: %s\n", fm.name);
-			for(size_t j = 0; j < tknzr->size; j++)
+			int idx_macro = 0;
+			if((idx_macro = is_macro(prep, tknzr->tokens[j])) != -1)
 			{
-				if(!strcmp(tknzr->tokens[j].tkn_str, fm.name))
+				func_macro_t fm = prep.macro_table[idx_macro];
+				printf("Found %s\n", fm.name);
+				i_see_no_changes = 0;
+				token_t args_num[8];
+				size_t arg_count = 0, arg_block;
+				token_t* cpy_bdy = malloc(fm.tkn_count * sizeof(token_t));
+				memcpy(cpy_bdy, fm.body, fm.tkn_count * sizeof(token_t));
+				for(arg_block = 0;; arg_block++)
 				{
-					printf("Found %s\n", fm.name);
-					i_see_no_changes = 0;
-					token_t args_num[8];
-					size_t arg_count = 0, arg_block;
-					token_t* cpy_bdy = malloc(fm.tkn_count * sizeof(token_t));
-					memcpy(cpy_bdy, fm.body, fm.tkn_count * sizeof(token_t));
-					for(arg_block = 0;; arg_block++)
+					token_t this_token = tknzr->tokens[j + arg_block + 1]; 
+					if(arg_block == 0)
 					{
-						token_t this_token = tknzr->tokens[j + arg_block + 1]; 
-						if(arg_block == 0)
-						{
-							if(strcmp(this_token.tkn_str, "(")){
-								printf("Wrong use of macro. Name(args).\n");
-								free_tkn(tknzr);
-								exit(1);
-							}
-							continue;
+						if(strcmp(this_token.tkn_str, "(")){
+							printf("Wrong use of macro. Name(args).\n");
+							free_tkn(tknzr);
+							exit(1);
 						}
-						if(!strcmp(this_token.tkn_str, ","))
-						{
-							continue;
-						}
-						if(!strcmp(this_token.tkn_str, ")"))
-						{
-							arg_block++;
-							break;
-						}
-						args_num[arg_count] = tknzr->tokens[j + arg_block + 1];
-						arg_count++;
+						continue;
 					}
-					if(fm.arg_count != arg_count)
+					if(!strcmp(this_token.tkn_str, ","))
 					{
-						printf("Wrong amount of arguments for macro %s.\nExpected: %zu\nGot: %zu\n", fm.name, fm.arg_count, arg_count);
-						free_tkn(tknzr);
-						exit(1);
+						continue;
 					}
-					for(size_t k = 0; k < fm.arg_count; k++)
+					if(!strcmp(this_token.tkn_str, ")"))
 					{
-						for(size_t l = 0; l < fm.tkn_count; l++)
-						{
-							if(!strcmp(cpy_bdy[l].tkn_str, fm.args[k]))
-							{
-								cpy_bdy[l] = args_num[k];
-							}
-						}
+						arg_block++;
+						break;
 					}
-					for(size_t k = 0; k < fm.tkn_count; k++)
-					{
-						push_token(&tknzr_tmp, cpy_bdy[k]);
-					}
-					j += arg_block;
+					args_num[arg_count] = tknzr->tokens[j + arg_block + 1];
+					arg_count++;
 				}
-				else
+				if(fm.arg_count != arg_count)
 				{
-					push_token(&tknzr_tmp, tknzr->tokens[j]);
+					printf("Wrong amount of arguments for macro %s.\nExpected: %zu\nGot: %zu\n", fm.name, fm.arg_count, arg_count);
+					free_tkn(tknzr);
+					exit(1);
 				}
+				for(size_t k = 0; k < fm.arg_count; k++)
+				{
+					int is_used = 0;
+					for(size_t l = 0; l < fm.tkn_count; l++)
+					{
+						if(!strcmp(cpy_bdy[l].tkn_str, fm.args[k]))
+						{
+							cpy_bdy[l] = args_num[k];
+							is_used = 1;
+						}
+					}
+					if(is_used == 0)
+					{
+						printf("WARNING: Unused macro argument %s\n", fm.args[fm.arg_count]);
+					}
+				}
+				for(size_t k = 0; k < fm.tkn_count; k++)
+				{
+					push_token(&tknzr_tmp, cpy_bdy[k]);
+				}
+				j += arg_block;
 			}
-			free(tknzr->tokens);
-			*tknzr = tknzr_tmp;
-			tknzr_tmp = init_tkn(NULL);
+			else
+			{
+				push_token(&tknzr_tmp, tknzr->tokens[j]);
+			}
 		}
+		free(tknzr->tokens);
+		*tknzr = tknzr_tmp;
+		tknzr_tmp = init_tkn(NULL);
 		iterations++;
 	}
 

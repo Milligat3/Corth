@@ -208,14 +208,14 @@ void apply_psh2_2wrd_imm(tokenizer_t *tknzr, tokenizer_t *tknzr2, size_t *i)
 	push_token(tknzr2, new_token);
 	new_token = (token_t){.type = TKN_PSH3_WRD_OPT, .val = {.num = {op_1, addr_2}}};
 	push_token(tknzr2, new_token);
-	*i+=3;
+	*i+=2;
 	
 }
 
 int match_psh2_wrd_word(tokenizer_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH_WORD &&
-		   tknzr->tokens[i+1].type == TKN_WRD_WORD;
+		   tknzr->tokens[i+1].type == TKN_WRD_WORD_IMM;
 }
 
 void apply_psh2_wrd_word(tokenizer_t *tknzr, tokenizer_t *tknzr2, size_t *i)
@@ -229,7 +229,7 @@ void apply_psh2_wrd_word(tokenizer_t *tknzr, tokenizer_t *tknzr2, size_t *i)
 	push_token(tknzr2, new_token);
 	new_token = (token_t){.type = TKN_PSH3_WRD_OPT, .val = {.num = {op_2, addr_2}}};
 	push_token(tknzr2, new_token);
-	*i+=2;
+	*i+=1;
 	
 }
 
@@ -300,10 +300,12 @@ void optimize(tokenizer_t *tknzr)
 			if(match_psh2_2wrd_imm(tknzr, i))
 			{
 				apply_psh2_2wrd_imm(tknzr, tknzr2, &i);
+				continue;
 			}
 			if(match_psh2_wrd_word(tknzr, i))
 			{
 				apply_psh2_wrd_word(tknzr, tknzr2, &i);
+				continue;
 			}
 			push_token(tknzr2, tknzr->tokens[i]);
 		}

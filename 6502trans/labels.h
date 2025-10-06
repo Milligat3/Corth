@@ -10,8 +10,8 @@ typedef struct
 
 typedef struct
 {
-	label_t labels[32];
-	size_t size;
+	label_t* labels;
+	size_t size, capacity;
 }label_table_t;
 
 extern label_table_t labl_tabl;

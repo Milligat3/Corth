@@ -64,32 +64,32 @@ int output_str(FILE* output, tokenizer_t *tknzr)
 			}
 			case TKN_JMP:
 			{
-				fprintf(output, "	jmp %s\n", tkn.val.label);
+				fprintf(output, "	jmp %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_JNZ:
 			{
-				fprintf(output, "	dex\n	lda $700, X\n	beq *+5\n	jmp %s\n", tkn.val.label);
+				fprintf(output, "	dex\n	lda $700, X\n	beq *+5\n	jmp %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_JZ:
 			{
-				fprintf(output, "	dex\n	lda $700, X\n	bne *+5\n	jmp %s\n", tkn.val.label);
+				fprintf(output, "	dex\n	lda $700, X\n	bne *+5\n	jmp %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_JCC:
 			{
-				fprintf(output, "	bcs *+5\n	jmp %s\n", tkn.val.label);
+				fprintf(output, "	bcs *+5\n	jmp %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_JCS:
 			{
-				fprintf(output, "	bcc *+5\n	jmp %s\n", tkn.val.label);
+				fprintf(output, "	bcc *+5\n	jmp %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_JSR:
 			{
-				fprintf(output, "	jsr %s\n", tkn.val.label);
+				fprintf(output, "	jsr %s\n", labl_tabl.labels[tkn.val.num[0]].label_name);
 				continue;
 			}
 			case TKN_RTS:
@@ -134,6 +134,11 @@ int output_str(FILE* output, tokenizer_t *tknzr)
 				continue;
 			}
 			case TKN_WRD_WORD:
+			{
+				fprintf(output, "	jsr OP_WRD_WORD\n");
+				continue;
+			}
+			case TKN_WRD_WORD_IMM:
 			{
 				fprintf(output, "	dex\n	lda $700, X\n	sta $%X\n", tkn.val.num[0]+1);
 				fprintf(output, "	dex\n	lda $700, X\n	sta $%X\n", tkn.val.num[0]);
@@ -269,14 +274,19 @@ int output_str(FILE* output, tokenizer_t *tknzr)
 				fprintf(output, "%s\n", asm_table.table[tkn.val.num[0]]);
 				continue;
 			}
+			case TKN_LABEL:
+			{
+				fprintf(output, "%s:\n", labl_tabl.labels[tkn.val.num[0]].label_name);
+				continue;
+			}
 			default:
 				break;
 		}
-		if(label_in_labels(tkn.tkn_str) != -1)
-		{
-			fprintf(output, "%s\n", tkn.tkn_str);
-			continue;
-		}
+		// if(label_in_labels(tkn.tkn_str) != -1)
+		// {
+		// 	fprintf(output, "%s\n", tkn.tkn_str);
+		// 	continue;
+		// }
 		
 		printf("Invalid Operand/Opcode/Mnemonic %s", tkn_strng[i].tkn_str);
 		fclose(output);
@@ -373,6 +383,22 @@ OP_WRD:\n\
 	sta (rwAddr1), Y\n\
 	rts\n\
 	\n\
+OP_WRD_WORD:\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	ldy #$01\n\
+	dex\n\
+	lda $700, X\n\
+	sta (rwAddr1), Y\n\
+	dey\n\
+	dex\n\
+	lda $700, X\n\
+	sta (rwAddr1), Y\n\
+	rts\n\
 OP_RDD:\n\
 	dex\n\
 	lda $700, X\n\

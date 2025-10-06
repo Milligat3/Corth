@@ -119,6 +119,7 @@ int main(int argc, char** argv)
 	{
 		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr.tokens[i].tkn_str, i == tknzr.size-1 ? "\"]\n" : "\",");
 	}
+	preprocess(&tknzr);
 	find_labels(&tknzr);
 
 	nob_log(NOB_INFO, "Labels found\n");
@@ -126,12 +127,11 @@ int main(int argc, char** argv)
 	{
 		printf("%s%s%s", i == 0 ? "[\"" : " \"", labl_tabl.labels[i].label_name, i == labl_tabl.size-1 ? "\"]\n" : "\",");
 	}
-
+	nob_log(NOB_INFO, "Tokens after preprocessing:\n");
 	for(size_t i = 0; i < tknzr.size; i++)
 	{
 		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr.tokens[i].tkn_str, i == tknzr.size-1 ? "\"]\n" : "\",");
 	}
-	preprocess(&tknzr);
 	lex_anal(&tknzr);
 	if(check_syntax(&tknzr))
 	{

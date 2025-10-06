@@ -52,79 +52,84 @@ int check_syntax(tokenizer_t *tknzr)
 			case TKN_JMP:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JMP: %s\n", next_tok.tkn_str);
-	
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
 			case TKN_JNZ:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JNZ: %s\n", next_tok.tkn_str);
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
 			case TKN_JZ:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JZ: %s\n", next_tok.tkn_str);
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
 			case TKN_JSR:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JSR: %s\n", next_tok.tkn_str);
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
 			case TKN_JCC:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JCC: %s\n", next_tok.tkn_str);
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
 			case TKN_JCS:
 			{
 				token_t next_tok = tknzr->tokens[++i];
-				if(jmp_in_labels(next_tok.tkn_str) == -1)
+				int idx = jmp_in_labels(next_tok.tkn_str); 
+				if(idx == -1)
 				{
 					printf("Not a valid label after JCS: %s\n", next_tok.tkn_str);
 					found_err = 1;
 				}
 				token_t new_token = *tkn;
-				strcpy(new_token.val.label, next_tok.tkn_str);
+				new_token.val.num[0] = idx;
 				push_token(tknzr2, new_token);
 				continue;
 			}
@@ -221,7 +226,7 @@ int check_syntax(tokenizer_t *tknzr)
 				{
 					if(strtoul(next_tkn.tkn_str, NULL, 10) >= 0x10000)
 					{
-						printf("The adress is bigger than 0xFFFF for immediate WRD. Abort.\n");
+						printf("The adress is bigger than 0xFFFF and is not suitable for immediate WRD. Abort.\n");
 						found_err = 1;
 					}
 					token_t new_token = *tkn;
@@ -234,6 +239,27 @@ int check_syntax(tokenizer_t *tknzr)
 				push_token(tknzr2, *tkn);
 				continue;
 			}
+			case TKN_WRD_WORD:
+			{
+				token_t next_tkn = tknzr->tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					if(strtoul(next_tkn.tkn_str, NULL, 10) >= 0x10000)
+					{
+						printf("The adress is bigger than 0xFFFF and is not suitable for immediate WRD_W. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_WRD_WORD_IMM;
+					new_token.val.num[0] = strtoul(next_tkn.tkn_str, NULL, 10);
+					push_token(tknzr2, new_token);
+					i++;
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			
 			case TKN_RDD:
 			{
 				token_t next_tkn = tknzr->tokens[i+1];
@@ -241,7 +267,7 @@ int check_syntax(tokenizer_t *tknzr)
 				{
 					if(strtoul(next_tkn.tkn_str, NULL, 10) >= 0x10000)
 					{
-						printf("The adress is bigger than 0xFFFF for immediate RDD. Abort.\n");
+						printf("The adress is bigger than 0xFFFF and is not suitable for immediate RDD. Abort.\n");
 						found_err = 1;
 					}
 					token_t new_token = *tkn;
@@ -429,14 +455,26 @@ int check_syntax(tokenizer_t *tknzr)
 				push_token(tknzr2, *tkn);
 				continue;
 			}
+			case TKN_LABEL:
+			{
+				int idx = label_in_labels(tkn->tkn_str);
+				if(idx == -1)
+				{
+					printf("Unreachable tho\n");
+					found_err = 1;
+				}
+				token_t new_token = (token_t){.type = TKN_LABEL, .val = {.num[0] = idx}};
+				push_token(tknzr2, new_token);
+				continue;	
+			} 
 			default:
 				break;
 		}
-		if(label_in_labels(tkn->tkn_str) != -1)
-		{
-			push_token(tknzr2, *tkn);
-			continue;
-		}
+		// if(label_in_labels(tkn->tkn_str) != -1)
+		// {
+		// 	push_token(tknzr2, *tkn);
+		// 	continue;
+		// }
 
 		printf("Invalid Operand/Opcode/Mnemonic %s\n", tkn_strng[i].tkn_str);
 		found_err = 1;
