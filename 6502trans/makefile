@@ -1,4 +1,4 @@
-TARGET := CorthCOMP.exe
+TARGET := CorthCOMP
 
 CC := gcc
 CFLAGS := -ggdb -Wall -Werror -Wextra -Wpedantic
