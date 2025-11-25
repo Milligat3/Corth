@@ -242,7 +242,7 @@ void balance_macro(char** string, tokenizer_t *tknzr)
                     printf("Slice: %s\n", slice);
                     tokenize_macro(tknzr, paren.macro_start, paren.macro_end);
                     free(slice);
-                    stringptr += sizeof("@MACRO_END");
+                    stringptr += sizeof("@MACRO_END") - 1;
     				*string = stringptr;
     				return;                
                 }
@@ -333,26 +333,6 @@ void preprocess(tokenizer_t *tknzr)
 		return;
 	// tknzr->prep = init_preproc();
 
-	for(size_t i = 0; i < prep.const_count; i++)
-	{
-		const_macro_t cm = prep.const_table[i];
-		
-		for(size_t j = 0; j < tknzr->size; j++)
-		{
-			if(!strcmp(tknzr->tokens[j].tkn_str, cm.expect.tkn_str))
-			{
-				// printf("Found one!\n");
-				// tknzr->tokens[j] = exchange;
-				printf("BEFORE: token[%zu] = %s (type %d)\n", 
-           			   j, tknzr->tokens[j].tkn_str, tknzr->tokens[j].type);
-       
-        		tknzr->tokens[j] = cm.exchange;
-       
-        		printf("AFTER: token[%zu] = %s (type %d)\n", 
-           			   j, tknzr->tokens[j].tkn_str, tknzr->tokens[j].type);
-			}
-		}
-	}
 	// TODO: IMPLEMENT FUCKING MACRO INLINING ALREADY YOU FAT FUCK
 	int i_see_no_changes = 0;
 	int iterations = 0;
@@ -432,6 +412,26 @@ void preprocess(tokenizer_t *tknzr)
 		*tknzr = tknzr_tmp;
 		tknzr_tmp = init_tkn(NULL);
 		iterations++;
+	}
+	for(size_t i = 0; i < prep.const_count; i++)
+	{
+		const_macro_t cm = prep.const_table[i];
+		
+		for(size_t j = 0; j < tknzr->size; j++)
+		{
+			if(!strcmp(tknzr->tokens[j].tkn_str, cm.expect.tkn_str))
+			{
+				// printf("Found one!\n");
+				// tknzr->tokens[j] = exchange;
+				printf("BEFORE: token[%zu] = %s (type %d)\n", 
+           			   j, tknzr->tokens[j].tkn_str, tknzr->tokens[j].type);
+       
+        		tknzr->tokens[j] = cm.exchange;
+       
+        		printf("AFTER: token[%zu] = %s (type %d)\n", 
+           			   j, tknzr->tokens[j].tkn_str, tknzr->tokens[j].type);
+			}
+		}
 	}
 
 }
