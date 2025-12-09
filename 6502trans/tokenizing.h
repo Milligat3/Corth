@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -84,6 +85,7 @@ typedef struct
 {
 	char name[32];
 	char args[8][32];
+	size_t amount;
 	token_t *body;
 	size_t arg_count, tkn_count, tkn_cap;
 }func_macro_t;

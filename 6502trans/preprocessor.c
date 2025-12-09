@@ -63,6 +63,14 @@ void debug_macro(func_macro_t fm)
 	}
 }
 
+void debug_tkns(tokenizer_t tknzr)
+{
+	for(size_t i = 0; i < tknzr.size; i++)
+	{
+		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr.tokens[i].tkn_str, i == tknzr.size-1 ? "\"]\n" : "\",");
+	}
+}
+
 // char* get_slice(char* string, char* end)
 // {
 
@@ -87,6 +95,7 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 	name[end - start] = '\0';
 	strcpy(fm.name, name);
 	printf("%s\n", fm.name);
+	fm.amount = 0;
 	start = end;
 	while(*end && *(end-1) != ')')
 	{
@@ -316,6 +325,51 @@ int is_macro(preprocessor_t prep, token_t tkn)
 	return -1;
 }
 
+typedef struct
+{
+	tokenizer_t tkns;
+	size_t block_size;
+}Result_t;
+
+Result_t get_args_slice(tokenizer_t *tknzr, size_t pos)
+{
+	Result_t res = {.tkns = init_tkn(NULL), .block_size = 0};
+	int depth = 0;
+	size_t i;
+	// size_t start = 0, end = 0;
+	for(i = pos + 1; i < tknzr->size; i++)
+	{
+		token_t this_token = tknzr->tokens[i];
+		if(!strcmp(this_token.tkn_str, "("))
+		{
+			// if(depth == 0)
+			// {
+			// 	start = i;
+			// }
+			depth++;
+		}
+		if (!strcmp(this_token.tkn_str, ")"))
+		{
+			depth--;
+			if(depth < 0)
+			{
+				printf("Unmatched closing bracket.\n");
+				exit(1);
+			}
+			if(depth == 0)
+			{
+				printf("Block closed.\n");
+				// end = i;
+				push_token(&res.tkns, this_token);
+				break;
+			}
+		}
+		push_token(&res.tkns, this_token);
+	}
+	debug_tkns(res.tkns);
+	res.block_size = i - pos;
+	return res;
+}
 
 void preprocess(tokenizer_t *tknzr)
 {
@@ -336,10 +390,7 @@ void preprocess(tokenizer_t *tknzr)
 	// TODO: IMPLEMENT FUCKING MACRO INLINING ALREADY YOU FAT FUCK
 	int i_see_no_changes = 0;
 	int iterations = 0;
-	for(size_t i = 0; i < tknzr->size; i++)
-	{
-		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr->tokens[i].tkn_str, i == tknzr->size-1 ? "\"]\n" : "\",");
-	}
+	
 	while(!i_see_no_changes && iterations < MAX_ITERATIONS_FOR_MACRO){
 		i_see_no_changes = 1;
 
@@ -364,19 +415,21 @@ void preprocess(tokenizer_t *tknzr)
 				{
 					push_token(&cpy_bdy, fm.body[k]);
 				}
-				for(arg_block = 1;; arg_block++)
+				Result_t args_tkns = get_args_slice(tknzr, j);
+				arg_block = args_tkns.block_size;
+				for(size_t arg_block_1 = 0;; arg_block_1++)
 				{
-					token_t this_token = tknzr->tokens[j + arg_block]; 
-					if(arg_block == 1)
+					token_t this_token = args_tkns.tkns.tokens[arg_block_1]; 
+					if(arg_block_1 == 0)
 					{
 						if(strcmp(this_token.tkn_str, "(")){
 							printf("Wrong use of macro. Name(args).\n");
 							free_tkn(tknzr);
 							exit(1);
 						}
-						if(!strcmp(tknzr->tokens[j + arg_block + 1].tkn_str, ")"))
+						if(!strcmp(args_tkns.tkns.tokens[arg_block_1 + 1].tkn_str, ")"))
 						{
-							arg_block++;
+							arg_block_1++;
 							break;
 						}
 						continue;
@@ -389,13 +442,24 @@ void preprocess(tokenizer_t *tknzr)
 					}
 					while(true)
 					{
-						printf("%zu\n", j+arg_block);
-						if(j+arg_block >= tknzr->size)
+						printf("%zu\n", arg_block_1);
+						if(arg_block_1 >= args_tkns.tkns.size)
 						{
 							printf("Sum Ting Wong\n");
 							exit(1);
 						}
-						this_token = tknzr->tokens[j+arg_block];
+						this_token = args_tkns.tkns.tokens[arg_block_1];
+						if(is_macro(prep, this_token) != -1)
+						{
+							Result_t res_2 = get_args_slice(&args_tkns.tkns, arg_block_1);
+							push_token(&args_num[arg_count], this_token);
+							for(size_t o = 0; o < res_2.tkns.size; o++)
+							{
+								push_token(&args_num[arg_count], res_2.tkns.tokens[o]);
+							}
+							arg_block_1 += res_2.block_size;
+							continue;
+						}
 						if(!strcmp(this_token.tkn_str, ",") || !strcmp(this_token.tkn_str, ")"))
 						{
 							arg_count++;
@@ -403,7 +467,7 @@ void preprocess(tokenizer_t *tknzr)
 						}
 						printf("Pushing %s\n", this_token.tkn_str);
 						push_token(&args_num[arg_count], this_token);
-						arg_block++;
+						arg_block_1++;
 					}
 					if(!strcmp(this_token.tkn_str, ")"))
 					{
@@ -418,10 +482,7 @@ void preprocess(tokenizer_t *tknzr)
 				}
 				for(size_t j = 0; j < arg_count; j++)
 				{
-					for(size_t i = 0; i < args_num[j].size; i++)
-					{
-						printf("%s%s%s", i == 0 ? "[\"" : " \"", args_num[j].tokens[i].tkn_str, i == args_num[j].size-1 ? "\"]\n" : "\",");
-					}
+					debug_tkns(args_num[j]);
 				}
 				for(size_t k = 0; k < fm.arg_count; k++)
 				{
@@ -429,6 +490,35 @@ void preprocess(tokenizer_t *tknzr)
 					int is_used = 0;
 					for(size_t l = 0; l < cpy_bdy.size; l++)
 					{
+
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "USE_LABEL"))
+						{
+
+							token_t next_token = cpy_bdy.tokens[l+1];
+							
+							char* label = malloc(strlen(next_token.tkn_str)+10);
+							snprintf(label, strlen(next_token.tkn_str)+10, "%s_%zu", next_token.tkn_str, fm.amount);
+							token_t tkn_push = {.type = TKN_LABEL};
+							strcpy(tkn_push.tkn_str, label);
+							push_token(&bdy_tmp, tkn_push);
+							
+							l += 1;
+							continue;
+						}
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "LABEL"))
+						{
+
+							token_t next_token = cpy_bdy.tokens[l+1];
+							
+							char* label = malloc(strlen(next_token.tkn_str)+10);
+							snprintf(label, strlen(next_token.tkn_str)+10, "%s_%zu:", next_token.tkn_str, fm.amount);
+							token_t tkn_push = {.type = TKN_LABEL};
+							strcpy(tkn_push.tkn_str, label);
+							push_token(&bdy_tmp, tkn_push);
+							
+							l += 1;
+							continue;
+						}
 						if(!strcmp(cpy_bdy.tokens[l].tkn_str, fm.args[k]))
 						{
 							for(size_t m = 0; m < args_num[k].size; m++)
@@ -456,6 +546,7 @@ void preprocess(tokenizer_t *tknzr)
 				}
 
 				j += arg_block;
+				prep.macro_table[idx_macro].amount++;
 			}
 			else
 			{
