@@ -1,5 +1,4 @@
 
-
 #include <ctype.h>
 
 #include <stddef.h>
@@ -87,7 +86,7 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 	strncpy(name, start, end - start);
 	name[end - start] = '\0';
 	strcpy(fm.name, name);
-
+	printf("%s\n", fm.name);
 	start = end;
 	while(*end && *(end-1) != ')')
 	{
@@ -128,30 +127,7 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 	tokenizer_t tknzr2 = init_tkn(new_str);
 	parse_macros(&tknzr2);
 	tokenize(&tknzr2);
-	tokenizer_t tknzr3 = init_tkn(NULL);
-	for(size_t i = 0; i < tknzr2.size; i++)
-	{
-		if(!strcmp(tknzr2.tokens[i].tkn_str, "LABEL"))
-		{
-			token_t tkn = tknzr2.tokens[i+1];
-			for(size_t  j = 0; j < fm.arg_count; j++)
-			{
-				if(!strcmp(fm.args[j], tkn.tkn_str))
-				{
-					token_t tkn_psh = {.type = TKN_LABEL};
-					
-					snprintf(tkn_psh.tkn_str, strlen(fm.args[j])+2, "%s:", fm.args[j]);
-					push_token(&tknzr3, tkn_psh);
-					break;
-				}
-			}
-			i++;
-		}
-		else
-		{
-			push_token(&tknzr3, tknzr2.tokens[i]);
-		}
-	}
+	
 	preprocess(&tknzr2);
 	// printf("We fell here.\n");
 	fm.body = malloc(tknzr2.size*sizeof(token_t));
@@ -360,6 +336,10 @@ void preprocess(tokenizer_t *tknzr)
 	// TODO: IMPLEMENT FUCKING MACRO INLINING ALREADY YOU FAT FUCK
 	int i_see_no_changes = 0;
 	int iterations = 0;
+	for(size_t i = 0; i < tknzr->size; i++)
+	{
+		printf("%s%s%s", i == 0 ? "[\"" : " \"", tknzr->tokens[i].tkn_str, i == tknzr->size-1 ? "\"]\n" : "\",");
+	}
 	while(!i_see_no_changes && iterations < MAX_ITERATIONS_FOR_MACRO){
 		i_see_no_changes = 1;
 
@@ -371,34 +351,64 @@ void preprocess(tokenizer_t *tknzr)
 				func_macro_t fm = prep.macro_table[idx_macro];
 				printf("Found %s\n", fm.name);
 				i_see_no_changes = 0;
-				token_t args_num[8];
-				size_t arg_count = 0, arg_block;
-				token_t* cpy_bdy = malloc(fm.tkn_count * sizeof(token_t));
-				memcpy(cpy_bdy, fm.body, fm.tkn_count * sizeof(token_t));
-				for(arg_block = 0;; arg_block++)
+				size_t arg_count = 0, arg_cap = 16, arg_block;
+				tokenizer_t* args_num = malloc(sizeof(tokenizer_t)*arg_cap);
+				for(size_t k = 0; k < arg_cap; k++)
 				{
-					token_t this_token = tknzr->tokens[j + arg_block + 1]; 
-					if(arg_block == 0)
+					args_num[k] = (tokenizer_t){.size = 0, .capacity = 16};
+					args_num[k].tokens = malloc(args_num[k].capacity*sizeof(token_t));
+				}
+				tokenizer_t cpy_bdy = (tokenizer_t){.size = 0, .capacity = 16};
+				cpy_bdy.tokens = malloc(cpy_bdy.capacity*sizeof(token_t));
+				for(size_t k = 0; k < fm.tkn_count; k++)
+				{
+					push_token(&cpy_bdy, fm.body[k]);
+				}
+				for(arg_block = 1;; arg_block++)
+				{
+					token_t this_token = tknzr->tokens[j + arg_block]; 
+					if(arg_block == 1)
 					{
 						if(strcmp(this_token.tkn_str, "(")){
 							printf("Wrong use of macro. Name(args).\n");
 							free_tkn(tknzr);
 							exit(1);
 						}
+						if(!strcmp(tknzr->tokens[j + arg_block + 1].tkn_str, ")"))
+						{
+							arg_block++;
+							break;
+						}
 						continue;
 					}
-					if(!strcmp(this_token.tkn_str, ","))
+					
+					if(arg_count == arg_cap)
 					{
-						continue;
+						arg_cap *= 2;
+						args_num = realloc(args_num, arg_cap*sizeof(tokenizer_t));
+					}
+					while(true)
+					{
+						printf("%zu\n", j+arg_block);
+						if(j+arg_block >= tknzr->size)
+						{
+							printf("Sum Ting Wong\n");
+							exit(1);
+						}
+						this_token = tknzr->tokens[j+arg_block];
+						if(!strcmp(this_token.tkn_str, ",") || !strcmp(this_token.tkn_str, ")"))
+						{
+							arg_count++;
+							break;
+						}
+						printf("Pushing %s\n", this_token.tkn_str);
+						push_token(&args_num[arg_count], this_token);
+						arg_block++;
 					}
 					if(!strcmp(this_token.tkn_str, ")"))
 					{
-						arg_block++;
 						break;
 					}
-					
-					args_num[arg_count] = tknzr->tokens[j + arg_block + 1];
-					arg_count++;
 				}
 				if(fm.arg_count != arg_count)
 				{
@@ -406,26 +416,45 @@ void preprocess(tokenizer_t *tknzr)
 					free_tkn(tknzr);
 					exit(1);
 				}
+				for(size_t j = 0; j < arg_count; j++)
+				{
+					for(size_t i = 0; i < args_num[j].size; i++)
+					{
+						printf("%s%s%s", i == 0 ? "[\"" : " \"", args_num[j].tokens[i].tkn_str, i == args_num[j].size-1 ? "\"]\n" : "\",");
+					}
+				}
 				for(size_t k = 0; k < fm.arg_count; k++)
 				{
+					tokenizer_t bdy_tmp = init_tkn(NULL);
 					int is_used = 0;
-					for(size_t l = 0; l < fm.tkn_count; l++)
+					for(size_t l = 0; l < cpy_bdy.size; l++)
 					{
-						if(!strcmp(cpy_bdy[l].tkn_str, fm.args[k]))
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, fm.args[k]))
 						{
-							cpy_bdy[l] = args_num[k];
-							is_used = 1;
+							for(size_t m = 0; m < args_num[k].size; m++)
+							{
+								push_token(&bdy_tmp, args_num[k].tokens[m]);
+								is_used = 1;
+							}
+						}
+						else
+						{
+							push_token(&bdy_tmp, cpy_bdy.tokens[l]); 
 						}
 					}
+					free(cpy_bdy.tokens);
+					cpy_bdy = bdy_tmp;
 					if(is_used == 0)
 					{
 						printf("WARNING: Unused macro argument %s\n", fm.args[fm.arg_count]);
 					}
 				}
-				for(size_t k = 0; k < fm.tkn_count; k++)
+				
+				for(size_t k = 0; k < cpy_bdy.size; k++)
 				{
-					push_token(&tknzr_tmp, cpy_bdy[k]);
+					push_token(&tknzr_tmp, cpy_bdy.tokens[k]);
 				}
+
 				j += arg_block;
 			}
 			else

@@ -7,7 +7,7 @@
 			WRD addr
 		@macro_end
 		ROT
-		DUP_WRITE (addr)
+		DUP_WRITE ( addr )
 	@macro_end
 	@macro DRAW()
 		PSH 1
