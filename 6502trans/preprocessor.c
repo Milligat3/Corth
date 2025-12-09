@@ -94,7 +94,7 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 		while(*start && isspace(*start) && *start != '(') start++;
 		if(*start == '(') start++;
 		end = start;
-		while(*end && !isspace(*end) && *end != ',' && *end != ')') end++;
+		while(*end && *end != ',' && *end != ')') end++;
 		if(*end == ')' || *end == ',') end++;
 		if(end - start < 2){
 			start++;
@@ -128,6 +128,30 @@ void tokenize_macro(tokenizer_t* tknzr, char* string, char* macro_end)
 	tokenizer_t tknzr2 = init_tkn(new_str);
 	parse_macros(&tknzr2);
 	tokenize(&tknzr2);
+	tokenizer_t tknzr3 = init_tkn(NULL);
+	for(size_t i = 0; i < tknzr2.size; i++)
+	{
+		if(!strcmp(tknzr2.tokens[i].tkn_str, "LABEL"))
+		{
+			token_t tkn = tknzr2.tokens[i+1];
+			for(size_t  j = 0; j < fm.arg_count; j++)
+			{
+				if(!strcmp(fm.args[j], tkn.tkn_str))
+				{
+					token_t tkn_psh = {.type = TKN_LABEL};
+					
+					snprintf(tkn_psh.tkn_str, strlen(fm.args[j])+2, "%s:", fm.args[j]);
+					push_token(&tknzr3, tkn_psh);
+					break;
+				}
+			}
+			i++;
+		}
+		else
+		{
+			push_token(&tknzr3, tknzr2.tokens[i]);
+		}
+	}
 	preprocess(&tknzr2);
 	// printf("We fell here.\n");
 	fm.body = malloc(tknzr2.size*sizeof(token_t));
@@ -372,6 +396,7 @@ void preprocess(tokenizer_t *tknzr)
 						arg_block++;
 						break;
 					}
+					
 					args_num[arg_count] = tknzr->tokens[j + arg_block + 1];
 					arg_count++;
 				}
