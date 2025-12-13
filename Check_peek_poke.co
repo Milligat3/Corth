@@ -1,0 +1,119 @@
+@def FP $1
+
+@macro GET_SP()
+	ASM
+	{
+		txa
+		jsr OP_PUSH
+	}
+@macro_end
+
+@macro SET_SP()
+	ASM
+	{
+		jsr OP_POP
+		tax
+	}
+@macro_end
+
+@macro PROLOGUE()
+	ASM
+	{
+		lda $1
+		pha
+		dex
+		txa
+		sec
+		sbc $700, X
+		sta $1
+	}
+@macro_end
+
+@macro EPILOGUE()
+	ASM
+	{
+		dex
+		lda $1
+		clc
+		adc $700, X
+		tax
+		pla
+		sta $1
+	}
+@macro_end
+
+@macro PEEK_LOCAL(idx)
+	RDD FP
+	PSH idx
+	ADD
+	PEEK
+@macro_end
+
+@macro POKE_LOCAL_I(idx, val)
+	PSH val
+	RDD FP
+	PSH idx
+	ADD
+	POKE
+@macro_end
+
+
+@macro POKE_LOCAL(idx)
+	RDD FP
+	PSH idx
+	ADD
+	POKE
+@macro_end
+
+
+@macro CALL(name, args_count)
+	PSH args_count
+	jsr name
+@macro_end
+
+@macro FUNC(name, ret_count, body)
+	ARG_LABEL name
+	PROLOGUE()
+	body
+	PSH ret_count
+	EPILOGUE()
+	rts
+@macro_end
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+
+@macro SWAPPING(x, y)
+	PSH x
+	PSH y
+	CALL(swapping, 2)
+@macro_end
+
+@macro SWAPPING_BY_ADDR(x, y)
+	RDD x
+	RDD y
+	CALL(swapping, 2)
+@macro_end
+
+
+PSH 42
+
+SWAPPING(1, 2)
+
+WRD $300
+WRD $301
+WRD $400
+DRAW()
+TRAP: JMP TRAP
+
+FUNC(swapping, 2,
+
+	PEEK_LOCAL(0)
+	PEEK_LOCAL(1)
+	POKE_LOCAL(0)
+	POKE_LOCAL(1)
+
+)

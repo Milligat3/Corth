@@ -163,6 +163,17 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 		tknzr->tokens[tknzr->size].type = TKN_RDD;
 		goto inc;
 	}
+	if(!strcmp(tkn, "PEEK"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_PEEK;
+		goto inc;
+	}
+	if(!strcmp(tkn, "POKE"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_POKE;
+		goto inc;
+	}
+	
 	if(!strcmp(tkn, "AND"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_AND;

@@ -1,12 +1,12 @@
 @def scr_st $200
 @def scr_ptr $10
 
-@def line $20
+@def line_width $20
 
 
 
 @macro linecord(line)
-	scr_st + line*$20
+	scr_st + line*line_width
 @macro_end
 
 @macro FOR(i, start, end, body)
@@ -22,11 +22,6 @@
         LE end
         JNZ USE_LABEL loop
 @macro_end
-
-DRAW_LINE(1, 1)
-DRAW_LINE(2, 12)
-DRAW()
-TRAP: JMP TRAP
 
 @macro DRAW_LINE(col, line)
         FOR($1, 0, 32,
@@ -45,3 +40,12 @@ TRAP: JMP TRAP
 	PSH 1 
 	WRD $2001
 @macro_end
+
+MAIN:
+        DRAW_LINE(1, 1)
+        DRAW_LINE(2, 12)
+        DRAW_LINE(3, 2)
+        DRAW_LINE(4, 11)
+        
+        DRAW()
+TRAP: JMP TRAP

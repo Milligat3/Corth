@@ -32,7 +32,7 @@ AstNode_t* parse_factor(AstBuilder_t *tt)
 		eat_token(tt);
 		return node;	
 	default:
-		printf("Error. %s\n", current_token(tt).tkn_str); // Be more verbose
+		printf("Met Not an TKN_CONST. Met: Error. %s (type %d)\n", current_token(tt).tkn_str, current_token(tt).type); // Be more verbose
 		exit(1);
 		break;
 	}

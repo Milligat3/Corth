@@ -216,7 +216,8 @@ void tokenize_define(tokenizer_t* tknzr, char** string)
 	tokenize(&tt2);
 	strcpy(cm.expect.tkn_str, name);
 	cm.exchange = detach_tt(&tt2);
-	printf("Name: %s, Arg: %s\n", name, arg);
+	printf("Name: %s\nArgs: ", name);
+	debug_tkn_tbl(cm.exchange);
 	push_const(prep, cm);
 }
 
@@ -524,6 +525,28 @@ void preprocess(tokenizer_t *tknzr)
 							
 							char* label = malloc(strlen(next_token.tkn_str)+10);
 							snprintf(label, strlen(next_token.tkn_str)+10, "%s_%zu:", next_token.tkn_str, fm.amount);
+							token_t tkn_push = {.type = TKN_LABEL};
+							strcpy(tkn_push.tkn_str, label);
+							push_token(&bdy_tmp, tkn_push);
+							
+							l += 1;
+							continue;
+						}
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "ARG_LABEL"))
+						{
+
+							token_t next_token = cpy_bdy.tokens[l+1];
+							token_t label_token = {0};
+							for(size_t m = 0; m < fm.arg_count; m++)
+							{
+								if(!strcmp(next_token.tkn_str, fm.args[m]))
+								{
+									label_token = args_num[m].tokens[0];
+									break;
+								}
+							}
+							char* label = malloc(strlen(label_token.tkn_str)+2);
+							snprintf(label, strlen(label_token.tkn_str)+2, "%s:", label_token.tkn_str);
 							token_t tkn_push = {.type = TKN_LABEL};
 							strcpy(tkn_push.tkn_str, label);
 							push_token(&bdy_tmp, tkn_push);

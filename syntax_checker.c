@@ -10,6 +10,27 @@
 #include "ast_builder.h"
 
 
+int parse_arg_of_mnem(token_table_t *tts, size_t *i)
+{
+	token_table_t tknzr_3 = init_tt();
+	size_t j;
+	for(j = *i+1; j < tts->size; j++)
+	{
+		token_t *this_tok = &tts->tokens[j];
+		if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
+		{
+			push_token(&tknzr_3, *this_tok);
+			continue;
+		}
+		
+		break;
+	}
+	AstBuilder_t tt = {tknzr_3, 0};
+	AstNode_t *to_eval = parse_expr(&tt);
+	*i = j-1;
+	return eval(to_eval);	
+}
+
 int check_syntax(token_table_t *tknzr)
 {
 	token_table_t tknzr_tmp = init_tt();
@@ -31,24 +52,9 @@ int check_syntax(token_table_t *tknzr)
 					found_err = 1;
 					continue;
 				}
-				int num = 0;
-				token_table_t tknzr_3 = init_tt();
-				size_t j;
-				for(j = i+1; j < size_of_str; j++)
-				{
-					token_t *this_tok = &tkn_string.tokens[j];
-					if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-					{
-						push_token(&tknzr_3, *this_tok);
-						continue;
-					}
-					
-					break;
-				}
-				AstBuilder_t tt = {tknzr_3, 0};
-				AstNode_t *to_eval = parse_expr(&tt);
-				num = eval(to_eval);
+				int num = parse_arg_of_mnem(tknzr, &i);
 				token_t new_token = *tkn;
+				
 				if(num < 0x100)
 				{
 					new_token.val.num[0] = num;
@@ -65,7 +71,7 @@ int check_syntax(token_table_t *tknzr)
 					found_err = 1;
 					continue;
 				}
-				i = j-1;
+				
 				push_token(tknzr2, new_token);
 				continue;
 			}
@@ -169,23 +175,7 @@ int check_syntax(token_table_t *tknzr)
 					// 	printf("The number is bigger than 0xFF for immediate ADD. Abort.\n");
 					// 	found_err = 1;
 					// }
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate ADD. Abort.\n");
@@ -195,7 +185,7 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_ADD_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
+					
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -207,23 +197,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate SUB. Abort.\n");
@@ -233,7 +207,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_SUB_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -284,23 +257,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFFFF)
 					{
 						printf("The number is bigger than 0xFFFF for immediate WRD. Abort.\n");
@@ -310,34 +267,17 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_WRD_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
 				continue;
-			}
+			}		
 			case TKN_WRD_WORD:
 			{
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFFFF)
 					{
 						printf("The number is bigger than 0xFFFF for immediate WRD_WORD. Abort.\n");
@@ -347,7 +287,46 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_WRD_WORD_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_PEEK:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFF)
+					{
+						printf("The number is bigger than 0xFF for PEEK. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_PEEK_IMM;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_POKE:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFF)
+					{
+						printf("The number is bigger than 0xFF for POKE. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_POKE_IMM;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -359,23 +338,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFFFF)
 					{
 						printf("The number is bigger than 0xFFFF for immediate RDD. Abort.\n");
@@ -385,7 +348,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_RDD_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -396,23 +358,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate AND. Abort.\n");
@@ -422,7 +368,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_AND_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -433,23 +378,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate OR. Abort.\n");
@@ -459,7 +388,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_OR_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -470,23 +398,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate XOR. Abort.\n");
@@ -496,7 +408,7 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_XOR_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
+					
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -507,23 +419,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate GT. Abort.\n");
@@ -533,7 +429,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_GT_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -544,23 +439,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);					
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate LT. Abort.\n");
@@ -570,7 +449,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_LT_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -581,23 +459,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate EQ. Abort.\n");
@@ -607,7 +469,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_EQ_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -618,23 +479,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate GE. Abort.\n");
@@ -644,7 +489,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_GE_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);
@@ -655,23 +499,7 @@ int check_syntax(token_table_t *tknzr)
 				token_t next_tkn = tkn_string.tokens[i+1];
 				if(next_tkn.type == TKN_CONST)
 				{
-					int num = 0;
-					token_table_t tknzr_3 = init_tt();
-					size_t j;
-					for(j = i+1; j < tknzr->size; j++)
-					{
-						token_t *this_tok = &tkn_string.tokens[j];
-						if(this_tok->type == TKN_CONST || this_tok->type == TKN_BINOP)
-						{
-							push_token(&tknzr_3, *this_tok);
-							continue;
-						}
-						
-						break;
-					}
-					AstBuilder_t tt = {tknzr_3, 0};
-					AstNode_t *to_eval = parse_expr(&tt);
-					num = eval(to_eval);
+					int num = parse_arg_of_mnem(tknzr, &i);
 					if(num > 0xFF)
 					{
 						printf("The number is bigger than 0xFF for immediate LE. Abort.\n");
@@ -681,7 +509,6 @@ int check_syntax(token_table_t *tknzr)
 					new_token.type = TKN_LE_IMM;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
-					i = j-1;
 					continue;
 				}
 				push_token(tknzr2, *tkn);

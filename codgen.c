@@ -149,6 +149,26 @@ int output_str(FILE* output, token_table_t *tknzr)
 				fprintf(output, "	lda #$%02X\n	sta $%X\n", tkn.val.num[0], tkn.val.num[1]);
 				continue;
 			}
+			case TKN_PEEK:
+			{
+				fprintf(output, "	jsr OP_PEEK\n");
+				continue;
+			}
+			case TKN_PEEK_IMM:
+			{
+				fprintf(output, "	lda $700+$%02X\n	sta $700, X\n	inx\n", tkn.val.num[0]);
+				continue;
+			}
+			case TKN_POKE:
+			{
+				fprintf(output, "	jsr OP_POKE\n");
+				continue;
+			}
+			case TKN_POKE_IMM:
+			{
+				fprintf(output, "	dex\n	lda $700, X\n	sta $700+$%02X\n", tkn.val.num[0]);
+				continue;
+			}
 			case TKN_RDD:
 			{ 
 				fprintf(output, "	jsr OP_RDD\n");
@@ -512,6 +532,28 @@ OP_ROT:\n\
 	tya\n\
 	sta $700, X\n\
 	inx\n\
-	rts");
+	rts\n\
+OP_PEEK:\n\
+	ldy #0\n\
+	lda #$7\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	lda (rwAddr1), Y\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
+OP_POKE:\n\
+	ldy #0\n\
+	lda #$7\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	dex\n\
+	lda $700, X\n\
+	sta (rwAddr1), Y\n\
+	rts\n");
 	return 1;
 }
