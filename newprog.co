@@ -1,0 +1,35 @@
+
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+@macro CALC(a, b, c, d)
+
+	PSH a
+	RSH
+	PSH b
+	ADD
+	PSH c
+	DUP
+	PSH d
+	SUB
+	SUB
+	WRD $200
+@macro_end
+
+CALC(1, 2, 3, 4)
+DRAW()
+
+HALT: JMP HALT
+
+
+
+
+
+
+
+
+
+

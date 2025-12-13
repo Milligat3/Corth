@@ -1,0 +1,14 @@
+@macro WRITE(value, addr)
+	PSH value
+	WRD addr
+@macro_end
+
+@macro WRITE_WORD(value, addr)
+
+	PSH value
+	WRD_W addr
+@macro_end
+
+WRITE($42, $69)
+
+WRITE_WORD($100, $200)

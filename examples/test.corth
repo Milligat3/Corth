@@ -1,0 +1,25 @@
+@macro SOMTENG ( )
+PSH 4
+PSH 2
+ADD
+
+PSH 5
+PSH 3
+ADD
+
+SUB
+
+PSH 2
+PSH 4
+RDD
+
+PSH 0
+PSH 2
+RDD
+
+WRD
+@macro_end
+
+PSH 2
+
+SOMTENG (     )

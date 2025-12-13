@@ -1,0 +1,15 @@
+PSH 41
+RSH
+
+JCC Carry_Clear
+
+PSH 1
+WRD $200
+
+HLT
+
+Carry_Clear:
+	PSH 1
+	WRD $201
+
+HLT

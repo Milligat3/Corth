@@ -1,0 +1,32 @@
+@macro FOR(i, start, end, condition, body)
+	PSH start
+	WRD i
+	LABEL loop
+	body
+
+	RDD i
+	DUP
+	condition end
+	JZ USE_LABEL break
+	INC
+	DUP
+	WRD i
+	
+	JMP USE_LABEL loop
+	LABEL break
+	POP
+@macro_end
+
+
+FOR($11, $2, $6, LT,
+	FOR($10, 0, $FF, XOR,
+		PSH 1
+		RDD $10
+		RDD $11
+		WRD
+		INC
+	)
+)
+PSH 1
+WRD $2001
+TRAP: JMP TRAP

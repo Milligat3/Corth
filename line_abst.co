@@ -1,0 +1,47 @@
+@def scr_st $200
+@def scr_ptr $10
+
+@def line $20
+
+
+
+@macro linecord(line)
+	scr_st + line*$20
+@macro_end
+
+@macro FOR(i, start, end, body)
+        PSH start
+        WRD i
+        LABEL loop
+        body
+
+        RDD i
+        INC
+        DUP
+        WRD i
+        LE end
+        JNZ USE_LABEL loop
+@macro_end
+
+DRAW_LINE(1, 1)
+DRAW_LINE(2, 12)
+DRAW()
+TRAP: JMP TRAP
+
+@macro DRAW_LINE(col, line)
+        FOR($1, 0, 32,
+                PSH col
+                
+                PSH linecord(line)
+		SWP
+		RDD $1
+		ADD
+		SWP
+                WRD
+        )
+@macro_end
+
+@macro DRAW()
+	PSH 1 
+	WRD $2001
+@macro_end

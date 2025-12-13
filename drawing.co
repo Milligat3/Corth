@@ -1,0 +1,129 @@
+@def 'A' $61
+@def 'W' $77
+@def 'S' $73
+@def 'D' $64
+@def scr_ptr1 $A1
+@def scr_ptr2 $A2
+@def color $A3
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+PSH $00
+WRD scr_ptr1
+PSH $02
+WRD scr_ptr2
+
+PSH $01
+WRD color
+
+MAIN_LOOP:
+	JSR check_input
+	PSH 1
+	WRD $FF
+	JSR display_pixel
+	DRAW()
+JMP MAIN_LOOP
+HLT
+
+display_pixel:
+	RDD color
+	DUP
+	INC
+	WRD color
+	RDD scr_ptr1
+	RDD scr_ptr2
+	WRD
+	RTS
+
+check_input:
+	RDD $FF
+	DUP
+	SUB 'W'
+	JZ W_KEY
+	DUP
+	SUB 'S'
+	JZ S_KEY
+	DUP
+	SUB 'A'
+	JZ A_KEY
+	DUP
+	SUB 'D'
+	JZ D_KEY
+	POP
+	RTS
+
+W_KEY:
+	POP
+	RDD scr_ptr1
+	SUB 32
+	WRD scr_ptr1
+	JCC w_w_c
+	RTS
+w_w_c:	
+	RDD scr_ptr2
+	DEC
+	DUP
+	SUB 1
+	JZ w_reset_hi
+	WRD scr_ptr2	
+	RTS
+w_reset_hi:
+	POP
+	PSH 5
+	WRD scr_ptr2
+	RTS
+
+
+S_KEY:
+	POP
+	RDD scr_ptr1
+	ADD 32
+	WRD scr_ptr1
+	JCS s_w_c
+	RTS
+s_w_c:	
+	RDD scr_ptr2
+	INC
+	DUP
+	SUB 6
+	JZ s_reset_hi
+	WRD scr_ptr2	
+	RTS
+s_reset_hi:
+	POP
+	PSH 2
+	WRD scr_ptr2
+	RTS
+
+A_KEY:
+	POP
+	RDD scr_ptr1
+	DEC
+	DUP
+	SUB $FF
+	JZ a_res 
+	WRD scr_ptr1
+	RTS
+a_res:
+	POP
+	PSH 31
+	WRD scr_ptr1
+	RTS
+
+D_KEY:
+	POP
+	RDD scr_ptr1
+	INC
+	DUP
+	SUB 32
+	JZ d_res 
+	WRD scr_ptr1
+	RTS
+d_res:
+	POP
+	PSH 0
+	WRD scr_ptr1
+	RTS

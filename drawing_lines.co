@@ -1,0 +1,34 @@
+
+@macro FOR(i, start, end, body)
+        PSH start
+        WRD i
+        LABEL loop
+        body
+
+        RDD i
+        INC
+        DUP
+        WRD i
+        LE end
+        JNZ USE_LABEL loop
+@macro_end
+
+
+@macro DRAW_LINE(col, hi, lo)
+        FOR($1, 0, 32,
+                PSH col
+                RDD $1
+                PSH lo
+                ADD
+                PSH hi
+                WRD
+        )
+@macro_end
+
+
+DRAW_LINE(1, 2, $10*0)
+DRAW_LINE(2, 2, $10*2)
+DRAW_LINE(3, 3, $10*4)
+PSH 1
+WRD $2001
+TRAP: JMP TRAP

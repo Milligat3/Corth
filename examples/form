@@ -1,0 +1,115 @@
+OP_PUSH:\n\
+ldy #$00\n\
+sta ($F0), Y\n\ 
+clc\n\
+lda $F0\n\
+adc #$01\n\
+sta $F0\n\
+lda $F1\n\
+adc #$00\n\
+sta $F1\n\
+rts\n\
+\n\
+OP_POP:\n\
+sec\n\
+lda $F0\n\
+sbc #$01\n\
+sta $F0\n\
+lda $F1\n\
+sbc #$00\n\
+sta $F1\n\
+rts\n\
+\n\
+OP_ADD:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sta tmp\n\
+jsr POP\n\
+lda ($F0), Y\n\
+clc\n\
+adc tmp\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_SUB:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sta tmp\n\
+jsr POP\n\
+lda ($F0), Y\n\
+sec\n\
+sbc tmp\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_RSH:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+lsr A\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_LSH:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+asl A\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_DUP:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+jsr PUSH\n\
+rts\n\
+\n\
+OP_SWP:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sta tmp\n\
+jsr POP\n\
+lda ($F0), Y\n\
+sta tmp2\n\
+lda tmp\n\
+sta ($F0), Y\n\
+lda tmp2\n\
+jsr PUSH\n\
+rts\n\
+\n\
+OP_INC:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+clc\n\
+adc #$01\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_DEC:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sec\n\
+sbc #$01\n\
+sta ($F0), Y\n\
+rts\n\
+\n\
+OP_WRD:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sta rwAddr2\n\
+jsr POP\n\
+lda ($F0), Y\n\
+sta rwAddr1\n\
+jsr POP\n\
+lda ($F0), Y\n\
+sta (rwAddr1), Y\n\
+rts\n\
+\n\
+OP_RDD:\n\
+ldy #$00\n\
+lda ($F0), Y\n\
+sta rwAddr2\n\
+jsr POP\n\
+lda ($F0), Y\n\
+sta rwAddr1\n\
+lda (rwAddr1), Y\n\
+sta ($F0), Y\n\
+rts\n\

@@ -1,0 +1,20 @@
+@macro WRITE(value, addr)
+	PSH value
+	WRD addr
+@macro_end
+
+@macro WRITE_WORD(value, addr)
+	PSH value
+	WRD_W addr
+@macro_end
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+WRITE($1, $200)
+WRITE_WORD($102, $201)
+DRAW()
+HALT: JMP HALT
+
