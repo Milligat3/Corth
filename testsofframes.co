@@ -92,19 +92,12 @@
 	CALL(swapping, 2)
 @macro_end
 
-@macro SWAP(x, y)
-	RDD x
-	RDD y
-	CALL(swapping, 2)
-@macro_end
-
 
 PSH 42
 
-SWAP(1, 2)
-
+PSH 12
+CALL(checkup, 1)
 WRD $300
-WRD $301
 WRD $400
 DRAW()
 TRAP: JMP TRAP
@@ -116,4 +109,29 @@ FUNC(swapping, 2,
 	POKE_LOCAL(0)
 	POKE_LOCAL(1)
 
+)
+
+FUNC(checkup, 1,
+	DUP
+	JZ checkup_ret_zero
+	DUP
+	SUB 1
+	JZ checkup_ret_one
+	PEEK_LOCAL(0)
+	DEC
+	CALL(checkup, 1)
+	PEEK_LOCAL(0)
+	SUB 2
+	CALL(checkup, 1)
+	ADD
+	POKE_LOCAL(0)
+	JMP checkup_ret
+	checkup_ret_one:
+	PSH 1
+	POKE_LOCAL(0)
+	JMP checkup_ret 
+	checkup_ret_zero:
+	PSH 0
+	POKE_LOCAL(0)
+	checkup_ret:
 )
