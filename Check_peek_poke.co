@@ -86,13 +86,13 @@
 @macro_end
 
 
-@macro SWAPPING(x, y)
+@macro SWAP(x, y)
 	PSH x
 	PSH y
 	CALL(swapping, 2)
 @macro_end
 
-@macro SWAPPING_BY_ADDR(x, y)
+@macro SWAP(x, y)
 	RDD x
 	RDD y
 	CALL(swapping, 2)
@@ -101,7 +101,7 @@
 
 PSH 42
 
-SWAPPING(1, 2)
+SWAP(1, 2)
 
 WRD $300
 WRD $301
