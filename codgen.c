@@ -43,12 +43,31 @@ int output_str(FILE* output, token_table_t *tknzr)
 			case TKN_SUB:
 			{
 				fprintf(output, "	jsr OP_SUB\n");
-				i++;
 				continue;
 			}
 			case TKN_SUB_IMM:
 			{
 				fprintf(output, "	dex\n	lda $700, X\n	sec\n	sbc #$%X\n	sta $700, X\n	inx\n", tkn.val.num[0]);
+				continue;
+			}
+			case TKN_ADD_WORD:
+			{
+				fprintf(output, "	jsr OP_ADD_WORD\n");
+				continue;
+			}
+			case TKN_ADD_IMM_WORD:
+			{
+				fprintf(output, "	dex\n	dex\n	lda $700, X\n	clc\n	adc #$%X\n	sta $700, X\n	inx\n	lda $700, X\n	adc #$%X\n	sta $700, X\n	inx\n", tkn.val.num[0] & 0xFF, tkn.val.num[0] >> 8);
+				continue;
+			}
+			case TKN_SUB_WORD:
+			{
+				fprintf(output, "	jsr OP_SUB_WORD\n");
+				continue;
+			}
+			case TKN_SUB_IMM_WORD:
+			{
+				fprintf(output, "	dex\n	dex\n	lda $700, X\n	sec\n	sbc #$%X\n	sta $700, X\n	inx\n	lda $700, X\n	sbc #$%X\n	sta $700, X\n	inx\n", tkn.val.num[0] & 0xFF, tkn.val.num[0] >> 8);
 				continue;
 			}
 			case TKN_RSH:
@@ -169,6 +188,26 @@ int output_str(FILE* output, token_table_t *tknzr)
 				fprintf(output, "	dex\n	lda $700, X\n	sta $700+$%02X\n", tkn.val.num[0]);
 				continue;
 			}
+			case TKN_PEEK_WORD:
+			{
+				fprintf(output, "	jsr OP_PEEK_WORD\n");
+				continue;
+			}
+			case TKN_PEEK_IMM_WORD:
+			{
+				fprintf(output, "	lda $700+$%02X\n	sta $700, X\n	inx\n	lda $700+$%02X\n	sta $700, X\n	inx\n", tkn.val.num[0]*2, tkn.val.num[0]*2+1);
+				continue;
+			}
+			case TKN_POKE_WORD:
+			{
+				fprintf(output, "	jsr OP_POKE_WORD\n");
+				continue;
+			}
+			case TKN_POKE_IMM_WORD:
+			{
+				fprintf(output, "	dex\n	lda $700, X\n	sta $700+$%02X\n	dex\n	lda $700, X\n	sta $700+$%02X\n", tkn.val.num[0]*2+1, tkn.val.num[0]*2);
+				continue;
+			}
 			case TKN_RDD:
 			{ 
 				fprintf(output, "	jsr OP_RDD\n");
@@ -177,6 +216,16 @@ int output_str(FILE* output, token_table_t *tknzr)
 			case TKN_RDD_IMM:
 			{
 				fprintf(output, "	lda $%X\n	jsr OP_PUSH\n", tkn.val.num[0]);
+				continue;
+			}
+			case TKN_RDD_WORD:
+			{ 
+				fprintf(output, "	jsr OP_RDD_WORD\n");
+				continue;
+			}
+			case TKN_RDD_IMM_WORD:
+			{
+				fprintf(output, "	lda $%X\n	jsr OP_PUSH\n	lda $%X\n	jsr OP_PUSH\n", tkn.val.num[0], tkn.val.num[0]+1);
 				continue;
 			}
 			case TKN_RDD2_WRD:
@@ -318,11 +367,25 @@ int output_str(FILE* output, token_table_t *tknzr)
 	inx\n\
 	rts\n\
 	\n\
+OP_PUSH_WORD:\n\
+	sta $700, X\n\
+	inx\n\
+	tya\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
 OP_POP:\n\
 	dex\n\
 	lda $700, X\n\
 	rts\n\
 	\n\
+OP_POP_WORD:\n\
+	dex\n\
+	lda $700, X\n\
+	tay\n\
+	dex\n\
+	lda $700, X\n\
+	rts\n\
 OP_ADD:\n\
 	dex\n\
 	lda $700, X\n\
@@ -335,6 +398,26 @@ OP_ADD:\n\
 	inx\n\
 	rts\n\
 	\n\
+OP_ADD_WORD:\n\
+	dex\n\
+	lda $700, X\n\
+	sta tmp2\n\
+	dex\n\
+	lda $700, X\n\
+	sta tmp\n\
+	dex\n\
+	dex\n\
+	lda $700, X\n\
+	clc\n\
+	adc tmp\n\
+	sta $700, X\n\
+	inx\n\
+	lda $700, X\n\
+	adc tmp2\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
+	\n\
 OP_SUB:\n\
 	dex\n\
 	lda $700, X\n\
@@ -343,6 +426,26 @@ OP_SUB:\n\
 	lda $700, X\n\
 	sec\n\
 	sbc tmp\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
+	\n\
+OP_SUB_WORD:\n\
+	dex\n\
+	lda $700, X\n\
+	sta tmp2\n\
+	dex\n\
+	lda $700, X\n\
+	sta tmp\n\
+	dex\n\
+	dex\n\
+	lda $700, X\n\
+	sec\n\
+	sbc tmp\n\
+	sta $700, X\n\
+	inx\n\
+	lda $700, X\n\
+	sbc tmp2\n\
 	sta $700, X\n\
 	inx\n\
 	rts\n\
@@ -432,6 +535,22 @@ OP_RDD:\n\
 	inx\n\
 	rts\n\
 	\n\
+OP_RDD_WORD:\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	ldy #$00\n\
+	lda (rwAddr1), Y\n\
+	sta $700, X\n\
+	inx\n\
+	iny\n\
+	lda (rwAddr1), Y\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
 OP_AND:\n\
 	dex\n\
 	lda $700, X\n\
@@ -544,6 +663,21 @@ OP_PEEK:\n\
 	sta $700, X\n\
 	inx\n\
 	rts\n\
+OP_PEEK_WORD:\n\
+	lda #$7\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	ldy #0\n\
+	lda (rwAddr1), Y\n\
+	sta $700, X\n\
+	inx\n\
+	iny\n\
+	lda (rwAddr1), Y\n\
+	sta $700, X\n\
+	inx\n\
+	rts\n\
 OP_POKE:\n\
 	ldy #0\n\
 	lda #$7\n\
@@ -554,6 +688,23 @@ OP_POKE:\n\
 	dex\n\
 	lda $700, X\n\
 	sta (rwAddr1), Y\n\
+	rts\n\
+OP_POKE_WORD:\n\
+	lda #$7\n\
+	sta rwAddr2\n\
+	dex\n\
+	lda $700, X\n\
+	sta rwAddr1\n\
+	ldy #0\n\
+	dex\n\
+	dex\n\
+	lda $700, X\n\
+	sta (rwAddr1), Y\n\
+	iny\n\
+	inx\n\
+	lda $700, X\n\
+	sta (rwAddr1), Y\n\
+	dex\n\
 	rts\n");
 	return 1;
 }

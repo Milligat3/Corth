@@ -67,14 +67,36 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 		tknzr->tokens[tknzr->size].type = TKN_POP;
 		goto inc;
 	}
+	if(!strcmp(tkn, "PSH_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_PSH_WORD;
+		goto inc;
+	}
+	if(!strcmp(tkn, "POP_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_POP_WORD;
+		goto inc;
+	}
 	if(!strcmp(tkn, "ADD"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_ADD;
 		goto inc;
 	}
+	if(!strcmp(tkn, "ADD_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_ADD_WORD;
+		goto inc;
+	}
+
 	if(!strcmp(tkn, "SUB"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_SUB;
+		goto inc;
+	}
+	
+	if(!strcmp(tkn, "SUB_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_SUB_WORD;
 		goto inc;
 	}
 	if(!strcmp(tkn, "RSH"))
@@ -127,7 +149,6 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 		tknzr->tokens[tknzr->size].type = TKN_HLT;
 		goto inc;
 	}
-	
 	if(!strcmp(tkn, "DUP"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_DUP;
@@ -163,14 +184,29 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 		tknzr->tokens[tknzr->size].type = TKN_RDD;
 		goto inc;
 	}
+	if(!strcmp(tkn, "RDD_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_RDD_WORD;
+		goto inc;
+	}
 	if(!strcmp(tkn, "PEEK"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_PEEK;
 		goto inc;
 	}
+	if(!strcmp(tkn, "PEEK_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_PEEK_WORD;
+		goto inc;
+	}
 	if(!strcmp(tkn, "POKE"))
 	{
 		tknzr->tokens[tknzr->size].type = TKN_POKE;
+		goto inc;
+	}
+	if(!strcmp(tkn, "POKE_W"))
+	{
+		tknzr->tokens[tknzr->size].type = TKN_POKE_WORD;
 		goto inc;
 	}
 	

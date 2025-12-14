@@ -75,7 +75,33 @@ int check_syntax(token_table_t *tknzr)
 				push_token(tknzr2, new_token);
 				continue;
 			}
-			
+			case TKN_PSH_WORD:
+			{
+				token_t next_tok = tkn_string.tokens[i + 1];
+				if(next_tok.type != TKN_CONST)
+				{
+					printf("Not a valid digit operand after PSH_W: %s\n", next_tok.tkn_str);
+					found_err = 1;
+					continue;
+				}
+				int num = parse_arg_of_mnem(tknzr, &i);
+				token_t new_token = *tkn;
+				
+				if(num < 0x10000)
+				{
+					new_token.val.num[0] = num & 0xFF;
+					new_token.val.num[1] = num >> 8;
+				}
+				else
+				{
+					printf("Not a valid digit operand after PSH_W: %s\n", next_tok.tkn_str);
+					found_err = 1;
+					continue;
+				}
+				
+				push_token(tknzr2, new_token);
+				continue;
+			}
 			case TKN_JMP:
 			{
 				token_t next_tok = tkn_string.tokens[++i];
@@ -165,6 +191,12 @@ int check_syntax(token_table_t *tknzr)
 				push_token(tknzr2, *tkn);
 				continue;
 			}
+			case TKN_POP_WORD:
+			{
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+		
 			case TKN_ADD:
 			{
 				token_t next_tkn = tkn_string.tokens[i+1];
@@ -205,6 +237,53 @@ int check_syntax(token_table_t *tknzr)
 					}
 					token_t new_token = *tkn;
 					new_token.type = TKN_SUB_IMM;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_ADD_WORD:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					// if(strtoul(next_tkn.tkn_str, NULL, 10) >= 0x100)
+					// {
+					// 	printf("The number is bigger than 0xFF for immediate ADD. Abort.\n");
+					// 	found_err = 1;
+					// }
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFFFF)
+					{
+						printf("The number is bigger than 0xFFFF for immediate ADD. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_ADD_IMM_WORD;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+	
+				continue;
+			}
+			case TKN_SUB_WORD:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFFFF)
+					{
+						printf("The number is bigger than 0xFFFF for immediate SUB. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_SUB_IMM_WORD;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
 					continue;
@@ -332,6 +411,46 @@ int check_syntax(token_table_t *tknzr)
 				push_token(tknzr2, *tkn);
 				continue;
 			}
+			case TKN_PEEK_WORD:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFF)
+					{
+						printf("The number is bigger than 0xFF for PEEK_W. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_PEEK_IMM_WORD;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_POKE_WORD:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFF)
+					{
+						printf("The number is bigger than 0xFF for POKE_W. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_POKE_IMM_WORD;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
 			
 			case TKN_RDD:
 			{
@@ -346,6 +465,26 @@ int check_syntax(token_table_t *tknzr)
 					}
 					token_t new_token = *tkn;
 					new_token.type = TKN_RDD_IMM;
+					new_token.val.num[0] = num;
+					push_token(tknzr2, new_token);
+					continue;
+				}
+				push_token(tknzr2, *tkn);
+				continue;
+			}
+			case TKN_RDD_WORD:
+			{
+				token_t next_tkn = tkn_string.tokens[i+1];
+				if(next_tkn.type == TKN_CONST)
+				{
+					int num = parse_arg_of_mnem(tknzr, &i);
+					if(num > 0xFFFF)
+					{
+						printf("The number is bigger than 0xFFFF for immediate RDD_W. Abort.\n");
+						found_err = 1;
+					}
+					token_t new_token = *tkn;
+					new_token.type = TKN_RDD_IMM_WORD;
 					new_token.val.num[0] = num;
 					push_token(tknzr2, new_token);
 					continue;

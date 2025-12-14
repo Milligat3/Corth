@@ -65,11 +65,41 @@
 	POKE
 @macro_end
 
+@macro PEEK_LOCAL_W(idx)
+	RDD FP
+	PSH idx*2
+	ADD
+	PEEK_W
+@macro_end
+
+@macro POKE_LOCAL_I_W(idx, val)
+	PSH_W val
+	RDD FP
+	PSH idx*2
+	ADD
+	POKE_W
+@macro_end
+
+
+@macro POKE_LOCAL_W(idx)
+	RDD FP
+	PSH idx*2
+	ADD
+	POKE_W
+@macro_end
+
+
 
 @macro CALL(name, args_count)
 	PSH args_count
 	jsr name
 @macro_end
+
+@macro CALL_W(name, args_count)
+	PSH args_count*2
+	jsr name
+@macro_end
+
 
 @macro FUNC(name, ret_count, body)
 	ARG_LABEL name
@@ -77,8 +107,19 @@
 	body
 	PSH ret_count
 	EPILOGUE()
-	rts
+	RTS
 @macro_end
+
+
+@macro FUNC_W(name, ret_count, body)
+	ARG_LABEL name
+	PROLOGUE()
+	body
+	PSH ret_count*2
+	EPILOGUE()
+	RTS
+@macro_end
+
 
 @macro DRAW()
 	PSH 1
@@ -86,52 +127,55 @@
 @macro_end
 
 
-@macro SWAP(x, y)
-	PSH x
-	PSH y
-	CALL(swapping, 2)
-@macro_end
-
 
 PSH 42
 
-PSH 14
-CALL(checkup, 1)
-WRD $300
+PSH_W 24
+CALL_W(checkup, 1)
+WRD_W $300
 WRD $400
 DRAW()
 TRAP: JMP TRAP
 
-FUNC(swapping, 2,
 
-	PEEK_LOCAL(0)
-	PEEK_LOCAL(1)
-	POKE_LOCAL(0)
-	POKE_LOCAL(1)
+FUNC_W(checkup, 1,
+	OVR OVR
 
-)
-
-FUNC(checkup, 1,
-	DUP
+	JSR WORD_ZERO
 	JZ checkup_ret_zero
-	DUP
-	SUB 1
+	OVR OVR
+	SUB_W 1
+	JSR WORD_ZERO
 	JZ checkup_ret_one
-	PEEK_LOCAL(0)
-	DEC
-	CALL(checkup, 1)
-	PEEK_LOCAL(0)
-	SUB 2
-	CALL(checkup, 1)
-	ADD
-	POKE_LOCAL(0)
+	PEEK_LOCAL_W(0)
+	SUB_W 1
+	CALL_W(checkup, 1)
+	PEEK_LOCAL_W(0)
+	SUB_W 2
+	CALL_W(checkup, 1)
+	ADD_W
+	POKE_LOCAL_W(0)
 	JMP checkup_ret
 	checkup_ret_one:
-	PSH 1
-	POKE_LOCAL(0)
+	PSH_W 1
+	POKE_LOCAL_W(0)
 	JMP checkup_ret 
 	checkup_ret_zero:
-	PSH 0
-	POKE_LOCAL(0)
+	PSH_W 0
+	POKE_LOCAL_W(0)
 	checkup_ret:
 )
+
+WORD_ZERO:
+	
+	JZ HIGH_ZERO
+	POP
+	PSH 1
+	RTS
+	HIGH_ZERO:
+	JZ LOW_ZERO
+	PSH 1
+	RTS
+	LOW_ZERO:
+	PSH 0
+	RTS
