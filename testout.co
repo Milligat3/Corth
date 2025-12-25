@@ -1,0 +1,44 @@
+	PSH 32
+	STR
+	PSH 0
+	RDD
+	PSH 10
+	ADD
+	STR
+	PSH 0
+	RDD
+	PSH 1
+	RDD
+	ADD
+	PSH 40
+	SUB
+	STR
+	PSH 0
+	RDD
+	PSH 2
+	ADD
+	PSH 0
+	WRD
+	PSH 1
+	STR
+	PSH 0
+	RDD
+	PSH 1
+	RDD
+	PSH 2
+	RDD
+	MUL
+	ADD
+	PSH 3
+	RDD
+	SUB
+	PSH 1
+	RDD
+	PSH 2
+	RDD
+	PSH 32
+	MUL
+	PSH 0
+	RDD
+	DIV
+	SUB

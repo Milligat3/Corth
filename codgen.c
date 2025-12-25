@@ -1,16 +1,20 @@
 #include "codgen.h"
-#include "tokenizing.h"
+#include "token.h"
 #include "asmgen.h"
 #include "labels.h"
 #include <stdio.h>
 
 int output_str(FILE* output, token_table_t *tknzr)
 {
-	token_t* tkn_strng = tknzr->tokens;
-	size_t size_of_str = tknzr->size;
+	size_t i;
+	token_t* tkn_strng;
+	size_t size_of_str;
+	
+	tkn_strng = tknzr->tokens;
+	size_of_str = tknzr->size;
 	
 	fprintf(output, "	tmp = $F2\n	tmp2 = $F3\n	rwAddr1 = $F4\n	rwAddr2 = $F5\n	.org $8000\n");
-	for(size_t i = 0; i < size_of_str; i++)
+	for(i = 0; i < size_of_str; i++)
 	{
 		token_t tkn = tkn_strng[i];
 		switch(tkn.type){
@@ -351,11 +355,6 @@ int output_str(FILE* output, token_table_t *tknzr)
 			default:
 				break;
 		}
-		// if(label_in_labels(tkn.tkn_str) != -1)
-		// {
-		// 	fprintf(output, "%s\n", tkn.tkn_str);
-		// 	continue;
-		// }
 		
 		printf("Invalid Operand/Opcode/Mnemonic %s", tkn_strng[i].tkn_str);
 		fclose(output);
@@ -397,8 +396,9 @@ OP_ADD:\n\
 	sta $700, X\n\
 	inx\n\
 	rts\n\
-	\n\
-OP_ADD_WORD:\n\
+	\n");
+fprintf(output, 
+"OP_ADD_WORD:\n\
 	dex\n\
 	lda $700, X\n\
 	sta tmp2\n\
@@ -417,8 +417,9 @@ OP_ADD_WORD:\n\
 	sta $700, X\n\
 	inx\n\
 	rts\n\
-	\n\
-OP_SUB:\n\
+	\n");
+	fprintf(output, 
+"OP_SUB:\n\
 	dex\n\
 	lda $700, X\n\
 	dex\n\
@@ -460,8 +461,9 @@ OP_LSH:\n\
 	asl $700, X\n\
 	inx\n\
 	rts\n\
-	\n\
-OP_DUP:\n\
+	\n");
+	fprintf(output, 
+"OP_DUP:\n\
 	dex\n\
 	lda $700, X\n\
 	inx\n\
@@ -505,8 +507,9 @@ OP_WRD:\n\
 	ldy #$00\n\
 	sta (rwAddr1), Y\n\
 	rts\n\
-	\n\
-OP_WRD_WORD:\n\
+	\n");
+	fprintf(output, 
+"OP_WRD_WORD:\n\
 	dex\n\
 	lda $700, X\n\
 	sta rwAddr2\n\
@@ -534,8 +537,10 @@ OP_RDD:\n\
 	sta $700, X\n\
 	inx\n\
 	rts\n\
-	\n\
-OP_RDD_WORD:\n\
+	\n");
+
+	fprintf(output, 
+"OP_RDD_WORD:\n\
 	dex\n\
 	lda $700, X\n\
 	sta rwAddr2\n\
@@ -576,8 +581,9 @@ OP_XOR:\n\
 	eor $700, X\n\
 	sta $700, X\n\
 	inx\n\
-	rts\n\
-OP_GT:\n\
+	rts\n");
+	fprintf(output, 
+"OP_GT:\n\
 	dex\n\
 	lda $700, X\n\
 	dex\n\
@@ -612,8 +618,9 @@ OP_LE:\n\
 	dex\n\
 	cmp $700, X\n\
 	beq LOG_PSH_0\n\
-	bcs LOG_PSH_1\n\
-LOG_PSH_1:\n\
+	bcs LOG_PSH_1\n");
+	fprintf(output, 
+"LOG_PSH_1:\n\
 	lda #$1\n\
 	sta $700, X\n\
 	inx\n\
@@ -651,8 +658,9 @@ OP_ROT:\n\
 	tya\n\
 	sta $700, X\n\
 	inx\n\
-	rts\n\
-OP_PEEK:\n\
+	rts\n");
+	fprintf(output, 
+"OP_PEEK:\n\
 	ldy #0\n\
 	lda #$7\n\
 	sta rwAddr2\n\
@@ -677,8 +685,9 @@ OP_PEEK_WORD:\n\
 	lda (rwAddr1), Y\n\
 	sta $700, X\n\
 	inx\n\
-	rts\n\
-OP_POKE:\n\
+	rts\n");
+	fprintf(output, 
+"OP_POKE:\n\
 	ldy #0\n\
 	lda #$7\n\
 	sta rwAddr2\n\

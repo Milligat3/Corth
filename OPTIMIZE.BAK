@@ -1,6 +1,7 @@
 
-
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "token.h"
@@ -9,7 +10,7 @@
 int tkns_eq(token_t tkn1, token_t tkn2)
 {
 
-	return tkn1.type == tkn2.type && !memcmp(tkn1.val.num, tkn2.val.num, 8*sizeof(unsigned long int));
+	return tkn1.type == tkn2.type && !memcmp(tkn1.val.num, tkn2.val.num, 8*sizeof(uint32_t));
 }
 
 int tknzr_cont_equal(token_table_t tknzr1, token_table_t tknzr2)
@@ -28,7 +29,7 @@ int tknzr_equal(token_table_t tknzr1, token_table_t tknzr2)
 	return tknzr1.size == tknzr2.size && tknzr_cont_equal(tknzr1, tknzr2);
 }
 
-int match_psh_psh_wrd(token_table_t *tknzr, size_t i)
+bool match_psh_psh_wrd(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_PSH &&
@@ -37,7 +38,7 @@ int match_psh_psh_wrd(token_table_t *tknzr, size_t i)
 
 void apply_psh_psh_wrd_opt(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int addr;
+	uint32_t addr;
 	token_t new_token;
 	addr = tknzr->tokens[*i].val.num[0] | (tknzr->tokens[*i+1].val.num[0] << 8);
 	new_token.type = TKN_WRD_IMM;
@@ -46,7 +47,7 @@ void apply_psh_psh_wrd_opt(token_table_t *tknzr, token_table_t *tknzr2, size_t *
 	*i+=3;
 }
 
-int match_psh_psh_rdd(token_table_t *tknzr, size_t i)
+bool match_psh_psh_rdd(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_PSH &&
@@ -55,7 +56,7 @@ int match_psh_psh_rdd(token_table_t *tknzr, size_t i)
 
 void apply_psh_psh_rdd(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int addr;
+	uint32_t addr;
 	token_t new_token;
 	addr = tknzr->tokens[*i].val.num[0] | (tknzr->tokens[*i+1].val.num[0] << 8);
 	new_token.type = TKN_RDD_IMM;
@@ -64,7 +65,7 @@ void apply_psh_psh_rdd(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	*i+=2;
 }
 
-int match_psh_wrd_imm(token_table_t *tknzr, size_t i)
+bool match_psh_wrd_imm(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_WRD_IMM;
@@ -81,7 +82,7 @@ void apply_psh_wrd_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 }
 
 
-int match_rrd_rrd_wrd(token_table_t *tknzr, size_t i)
+bool match_rrd_rrd_wrd(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_RDD_IMM &&
 		   tknzr->tokens[i+1].type == TKN_RDD_IMM &&
@@ -90,8 +91,8 @@ int match_rrd_rrd_wrd(token_table_t *tknzr, size_t i)
 
 void apply_rrd_imm_rrd_imm_wrd(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int addr1;
-	unsigned long int addr2;
+	uint32_t addr1;
+	uint32_t addr2;
 	token_t new_token;
 	addr1 = tknzr->tokens[*i].val.num[0];
 	addr2 = tknzr->tokens[*i+1].val.num[0];
@@ -102,7 +103,7 @@ void apply_rrd_imm_rrd_imm_wrd(token_table_t *tknzr, token_table_t *tknzr2, size
 	*i+=2;
 }
 
-int match_psh_rdd2_wrd(token_table_t *tknzr, size_t i)
+bool match_psh_rdd2_wrd(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_RDD2_WRD;
@@ -110,22 +111,22 @@ int match_psh_rdd2_wrd(token_table_t *tknzr, size_t i)
 
 void apply_psh_rdd2_wrd(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int val;
-	unsigned long int addr1;
-	unsigned long int addr2;
+	uint32_t val;
+	uint32_t addr1;
+	uint32_t addr2;
 	token_t new_token;
 	val = tknzr->tokens[*i].val.num[0];
 	addr1 = tknzr->tokens[*i+1].val.num[0];
 	addr2 = tknzr->tokens[*i+1].val.num[1];
 	new_token.type = TKN_PSH_RDD2_WRD;
 	new_token.val.num[0] = addr1;
-	new_token.val.num[1] = addr2;
+	new_token.val.num[1] = addr2; 
 	new_token.val.num[2] =   val;
 	push_token(tknzr2, new_token);
 	*i+=1;
 }
 
-int match_rdd_inc_dup_wrd(token_table_t *tknzr, size_t i)
+bool match_rdd_inc_dup_wrd(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_RDD_IMM &&
 		   tknzr->tokens[i+1].type == TKN_INC &&
@@ -135,8 +136,8 @@ int match_rdd_inc_dup_wrd(token_table_t *tknzr, size_t i)
 
 void apply_rrd_inc_dup_wrd(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int addr1;
-	unsigned long int addr2;
+	uint32_t addr1;
+	uint32_t addr2;
 	token_t new_token;
 	addr1 = tknzr->tokens[*i].val.num[0];
 	addr2 = tknzr->tokens[*i+3].val.num[0];
@@ -156,13 +157,13 @@ int match_psh_psh_add(token_table_t *tknzr, size_t i)
 
 void apply_psh_psh_add(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1;
-	unsigned long int op_2;
+	uint32_t op_1;
+	uint32_t op_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i+1].val.num[0];
 	new_token.type = TKN_PSH;
-	new_token.val.num[0] = (unsigned char)(op_2 + op_1);
+	new_token.val.num[0] = (uint8_t)(op_2 + op_1);
 	push_token(tknzr2, new_token);
 	*i+=2;
 }
@@ -175,13 +176,13 @@ int match_psh_add_imm(token_table_t *tknzr, size_t i)
 
 void apply_psh_add_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1;
-	unsigned long int op_2;
+	uint32_t op_1;
+	uint32_t op_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i+1].val.num[0];
 	new_token.type = TKN_PSH;
-	new_token.val.num[0] = (unsigned char)(op_2 + op_1);
+	new_token.val.num[0] = (uint8_t)(op_2 + op_1);
 	push_token(tknzr2, new_token);
 	*i+=1;
 }
@@ -197,13 +198,13 @@ int match_psh_psh_sub(token_table_t *tknzr, size_t i)
 
 void apply_psh_psh_sub(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1;
-	unsigned long int op_2;
+	uint32_t op_1;
+	uint32_t op_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i+1].val.num[0];
 	new_token.type = TKN_PSH;
-	new_token.val.num[0] = (unsigned char)(op_1 - op_2);
+	new_token.val.num[0] = (uint8_t)(op_1 - op_2);
 	push_token(tknzr2, new_token);
 	*i+=2;
 }
@@ -217,13 +218,13 @@ int match_psh_sub_imm(token_table_t *tknzr, size_t i)
 
 void apply_psh_sub_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1;
-	unsigned long int op_2;
+	uint32_t op_1;
+	uint32_t op_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i+1].val.num[0];
 	new_token.type = TKN_PSH;
-	new_token.val.num[0] = (unsigned char)(op_1 - op_2);
+	new_token.val.num[0] = (uint8_t)(op_1 - op_2);
 	push_token(tknzr2, new_token);
 	*i+=1;
 }
@@ -239,7 +240,10 @@ int match_psh2_2wrd_imm(token_table_t *tknzr, size_t i)
 
 void apply_psh2_2wrd_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1, op_2, addr_1, addr_2;
+	uint32_t op_1;
+	uint32_t op_2;
+	uint32_t addr_1;
+	uint32_t addr_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i].val.num[1];
@@ -254,7 +258,7 @@ void apply_psh2_2wrd_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	new_token.val.num[1] = addr_2;
 	push_token(tknzr2, new_token);
 	*i+=2;
-
+	
 }
 
 int match_psh2_wrd_word(token_table_t *tknzr, size_t i)
@@ -265,7 +269,10 @@ int match_psh2_wrd_word(token_table_t *tknzr, size_t i)
 
 void apply_psh2_wrd_word(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 {
-	unsigned long int op_1, op_2, addr_1, addr_2;
+	uint32_t op_1;
+	uint32_t op_2;
+	uint32_t addr_1;
+	uint32_t addr_2;
 	token_t new_token;
 	op_1 = tknzr->tokens[*i].val.num[0];
 	op_2 = tknzr->tokens[*i].val.num[1];
@@ -280,7 +287,7 @@ void apply_psh2_wrd_word(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	new_token.val.num[1] = addr_2;
 	push_token(tknzr2, new_token);
 	*i+=1;
-
+	
 }
 
 
@@ -296,14 +303,14 @@ void optimize(token_table_t *tknzr)
  	tknzr2	= &tknzr_tmp;
  	nobody_came = 0;
 	iterations = 0;
-
+	
 	while(!nobody_came && iterations < MAX_ITER_OPT){
 		for(i = 0; i < tknzr->size; i++)
 		{
 			if(match_psh_psh_wrd(tknzr, i))
 			{
 				apply_psh_psh_wrd_opt(tknzr, tknzr2, &i);
-				continue;
+				continue;	
 			}
 			if (match_psh_wrd_imm(tknzr, i))
 			{
@@ -370,4 +377,3 @@ void optimize(token_table_t *tknzr)
 	}
 }
 
-

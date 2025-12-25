@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "lexical_analysys.h"
-#include "tokenizing.h"
+#include "lexi.h"
+#include "token.h"
 
 int only_digits(char* str)
 {
@@ -41,13 +41,17 @@ int is_hex(char* str)
 
 void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 {
-	char* tkn = tkn_t.tkn_str;
+	char* tkn;
+	size_t size;
+	unsigned long int to_p;
+
+	tkn = tkn_t.tkn_str;
 	if(tknzr->size == tknzr->cap-1)
 	{
 		tknzr->cap *= 2;
 		tknzr->tokens = realloc(tknzr->tokens, tknzr->cap*sizeof(token_t));
 	}
-	size_t size = strlen(tkn);
+	size = strlen(tkn);
 	if(size > 32)
 	{
 		free(tknzr->tokens);
@@ -283,8 +287,8 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 	if(is_hex(tkn))
 	{
 		tkn++;
-		unsigned long long int to_p = strtoul(tkn, NULL, 16);
-		sprintf(tkn, "%llu", to_p);
+		to_p = strtoul(tkn, NULL, 16);
+		sprintf(tkn, "%lu", to_p);
 		size = strlen(tkn);
 		strncpy(tknzr->tokens[tknzr->size].tkn_str, tkn, size);
 		tknzr->tokens[tknzr->size].tkn_str[size] = '\0';
@@ -304,10 +308,14 @@ void push_str_tkn(token_table_t* tknzr, token_t tkn_t)
 
 void lex_anal(token_table_t *tt)
 {
-	token_table_t tknzr_tmp = init_tt();
-	for(size_t i = 0; i < tt->size; i++)
+	token_table_t tknzr_tmp;
+	size_t i;
+	token_t tkn;
+
+	tknzr_tmp = init_tt();
+	for(i = 0; i < tt->size; i++)
 	{
-		token_t tkn = tt->tokens[i];
+		tkn = tt->tokens[i];
 		push_str_tkn(&tknzr_tmp, tkn);
 	}
 	free(tt->tokens);

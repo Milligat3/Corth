@@ -1,4 +1,8 @@
-#include "tokenizing.h"
+#ifndef PREP_H
+
+#define PREP_H
+
+#include "token.h"
 #include <stddef.h>
 
 #define MAX_ITERATIONS_FOR_MACRO 100
@@ -8,3 +12,5 @@ void push_macro(preprocessor_t *prep, func_macro_t fm);
 void debug_macro(func_macro_t fm);
 void push_token_into_macro(func_macro_t *fm, token_t tkn);
 void preprocess(tokenizer_t *tkznr);
+
+#endif

@@ -1,6 +1,6 @@
-#pragma once
+#ifndef TOKEN_H
+#define TOKEN_H
 
-#include <stdint.h>
 #include <stddef.h>
 
 typedef enum
@@ -86,7 +86,7 @@ typedef struct
 	token_type type;
 	union value
 	{
-		uint32_t num[8];
+		unsigned long int num[8];
 		char label[32];
 	} val;
 }token_t;
@@ -137,3 +137,5 @@ token_table_t init_tt(void);
 token_table_t detach_tt(tokenizer_t *tknzr);
 tokenizer_t init_tkn(char* init_str);
 void tokenize(tokenizer_t* tknzr);
+
+#endif

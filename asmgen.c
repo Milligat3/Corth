@@ -1,10 +1,11 @@
-// ASM.c
+
 #include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "asmgen.h"
-#include "tokenizing.h"
+#include "token.h"
 
 asm_table_t asm_table = {0, 0, 256}; 
 
@@ -25,6 +26,10 @@ void init_asm_table(void)
 
 char * parse_asm(tokenizer_t* tknzr, char* start_asm)
 {
+	char *end_asm;
+	size_t size;
+	char* asm_block;
+	token_t asm_tkn;
 	while(*start_asm && isspace(*start_asm)) { start_asm++; }
 	if(*start_asm != '{')
 	{
@@ -32,13 +37,16 @@ char * parse_asm(tokenizer_t* tknzr, char* start_asm)
 		free_tkn(tknzr);
 		exit(1);
 	}
-	char *end_asm = ++start_asm;
+	end_asm = ++start_asm;
 	while(*end_asm != '}') { end_asm++; }
-	size_t size = end_asm - start_asm;
-	char* asm_block = malloc((size+1)*sizeof(char));
+	size = end_asm - start_asm;
+	asm_block = malloc((size+1)*sizeof(char));
 	strncpy(asm_block, start_asm, size);
 	asm_block[size] = '\0';
-	token_t asm_tkn = {"ASM", TKN_ASM, {{asm_table.size}}};
+	strcpy(asm_tkn.tkn_str, "ASM");
+	asm_tkn.type = TKN_ASM;
+	asm_tkn.val.num[0] = asm_table.size;
+
 	push_asm(asm_block);
 	push_token_tknzr(tknzr, asm_tkn);
 	printf("ASM BLOCK:\n %s\n", asm_block);

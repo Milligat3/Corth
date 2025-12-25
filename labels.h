@@ -1,11 +1,13 @@
-#pragma once
-#include "tokenizing.h"
-#include <stdint.h>
+#ifndef LABELS_H
+#define LABELS_H
+
+#include "token.h"
+
 #include <stddef.h>
 typedef struct
 {
 	char label_name[32];
-	uint16_t addr;
+	unsigned int addr;
 }label_t;
 
 typedef struct
@@ -19,3 +21,4 @@ extern label_table_t labl_tabl;
 int jmp_in_labels(char* tkn);
 int label_in_labels(char* tkn);
 void find_labels(tokenizer_t *tknzr);
+#endif

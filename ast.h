@@ -1,10 +1,11 @@
-// ast_builder.h
-#include "tokenizing.h"
+#ifndef AST_BUILDER_H
+#define AST_BUILDER_H
+#include "token.h"
 
 typedef enum
 {
 	NODE_BINOP,
-	NODE_CONST,
+	NODE_CONST
 }NodeType_t;
 
 typedef struct AstNode_t
@@ -36,7 +37,7 @@ typedef struct AstNode_t
 			char* oper;
 			
 		}binop;
-	};
+	}as;
 	struct AstNode_t *left, *right;
 }AstNode_t;
 
@@ -48,3 +49,5 @@ typedef struct AstBuilder_t
 
 AstNode_t *parse_expr(AstBuilder_t *tt);
 int eval(AstNode_t* node);
+
+#endif

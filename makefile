@@ -1,11 +1,11 @@
-TARGET := CorthCOMP.exe
+TARGET := CortCOMP.exe
 
 CC := gcc
-CFLAGS := -ggdb -Wall -Werror -Wextra -Wpedantic
+CFLAGS := -ggdb -Wall -Werror -Wextra -Wpedantic -std=c89
 
 all: $(TARGET)
 
-$(TARGET): CorthCOMP.o labels.o optimize.o syntax_checker.o codgen.o tokenizing.o asmgen.o preprocessor.o lexical_analysys.o utils.o ast_builder.o
+$(TARGET): CortCOMP.o labels.o optimize.o synt.o codgen.o token.o asmgen.o prep.o lexi.o utils.o ast.o
 	$(CC) $^ -o $@
 
 %.o: %.c

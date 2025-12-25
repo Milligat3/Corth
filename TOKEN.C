@@ -1,10 +1,9 @@
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "tokenizing.h"
+#include "token.h"
 #include "asmgen.h"
 #include "utils.h"
 
@@ -26,7 +25,8 @@ void free_tkn(tokenizer_t* tkn)
 
 token_table_t detach_tt(tokenizer_t *tknzr)
 {
-	token_table_t tt = tknzr->tt;
+	token_table_t tt;
+	tt = tknzr->tt;
 	tknzr->tt.tokens = NULL;
 	return tt;
 }
@@ -34,12 +34,13 @@ token_table_t detach_tt(tokenizer_t *tknzr)
 
 void push_str(tokenizer_t* tknzr, char* tkn)
 {
+	size_t size;
 	if(tknzr->tt.size == tknzr->tt.cap-1)
 	{
 		tknzr->tt.cap *= 2;
 		tknzr->tt.tokens = realloc(tknzr->tt.tokens, tknzr->tt.cap*sizeof(token_t));
 	}
-	size_t size = strlen(tkn);
+	size = strlen(tkn);
 
 	if(size > 32)
 	{
@@ -72,7 +73,10 @@ void push_token(token_table_t* tt, token_t tkn)
 
 token_table_t init_tt(void)
 {
-	token_table_t to_ret = {.cap = 16, .size = 0};
+	token_table_t to_ret;
+
+	to_ret.cap = 16;
+	to_ret.size = 0;
 	to_ret.tokens = malloc(to_ret.cap*sizeof(token_t));
 
 	return to_ret; 
@@ -80,25 +84,29 @@ token_table_t init_tt(void)
 
 tokenizer_t init_tkn(char* init_str)
 {
-	tokenizer_t tknzr = {.init_str = init_str};
+	tokenizer_t tknzr;
+	tknzr.init_str = init_str;
 	tknzr.tt = init_tt();
-	// printf("I fell. Asked for %zu bytes and fell somehow.\n", tknzr.cap*sizeof(token_t));
-	
 	return tknzr;
 }
 
 
 void tokenize(tokenizer_t* tknzr)
 {
-	char* start = tknzr->init_str;
-	// char *ptr = start;
+	char* start;
+	char* end;
+	int cnt;
+	char token[32];
+	char* start_asm;
+	char* end_asm;
+	start = tknzr->init_str;
 	while(*start)
 	{
 		
 		while(*start && isspace(*start)){start++;}
 		if(!*start) break;
 
-		char* end = start;
+		end = start;
 		while(*end && !isspace(*end))
 		{
 			if(is_delim(*start))
@@ -112,36 +120,30 @@ void tokenize(tokenizer_t* tknzr)
 				break;
 			}
 		}
-		int cnt = end - start;
+		cnt = end - start;
 		if(cnt >= 32)
 		{
 			printf("Tokens this big are not allowed!\n");
 			free_tkn(tknzr);
 			exit(1);
 		}
-		char token[32] = {0};
+		
 		
 		strncpy(token, start, cnt);
 		token[cnt] = '\0';
 		
-		// strip_token(&token);
-		// if(cnt == 0 || strlen(token) == 0 || *start == '\0')
-		// {
-		// 	start = end; 
-		// 	continue;
-		// }
 		if(!strcmp(token, "ASM"))
 		{
-			char* start_asm = end;
-			char* end_asm = parse_asm(tknzr, start_asm);
+			start_asm = end;
+			end_asm = parse_asm(tknzr, start_asm);
 			
 			start = end_asm+1;
 			continue;
 		}
 
 		start = end;
-		// tknzr->tt.init_str = start;
 		push_str(tknzr, token);
 	}
 	free(tknzr->init_str);
 }
+
