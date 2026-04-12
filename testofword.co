@@ -141,11 +141,11 @@ TRAP: JMP TRAP
 FUNC_W(checkup, 1,
 	OVR OVR
 
-	JSR WORD_ZERO
+	OR
 	JZ checkup_ret_zero
 	OVR OVR
 	SUB_W 1
-	JSR WORD_ZERO
+	OR
 	JZ checkup_ret_one
 	PEEK_LOCAL_W(0)
 	SUB_W 1
@@ -166,16 +166,4 @@ FUNC_W(checkup, 1,
 	checkup_ret:
 )
 
-WORD_ZERO:
-	
-	JZ HIGH_ZERO
-	POP
-	PSH 1
-	RTS
-	HIGH_ZERO:
-	JZ LOW_ZERO
-	PSH 1
-	RTS
-	LOW_ZERO:
-	PSH 0
-	RTS
+

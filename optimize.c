@@ -123,7 +123,7 @@ void apply_rrd_inc_dup_wrd(token_table_t *tknzr, token_table_t *tknzr2, size_t *
 	*i+=3;
 }
 
-int match_psh_psh_add(token_table_t *tknzr, size_t i)
+bool match_psh_psh_add(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_PSH &&
@@ -139,7 +139,7 @@ void apply_psh_psh_add(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	*i+=2;
 }
 
-int match_psh_add_imm(token_table_t *tknzr, size_t i)
+bool match_psh_add_imm(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_ADD_IMM;
@@ -155,7 +155,7 @@ void apply_psh_add_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 }
 
 
-int match_psh_psh_sub(token_table_t *tknzr, size_t i)
+bool match_psh_psh_sub(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_PSH &&
@@ -173,7 +173,7 @@ void apply_psh_psh_sub(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 }
 
 
-int match_psh_sub_imm(token_table_t *tknzr, size_t i)
+bool match_psh_sub_imm(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH &&
 		   tknzr->tokens[i+1].type == TKN_SUB_IMM;
@@ -188,7 +188,7 @@ void apply_psh_sub_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	*i+=1;
 }
 
-int match_psh2_2wrd_imm(token_table_t *tknzr, size_t i)
+bool match_psh2_2wrd_imm(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH_WORD &&
 		   tknzr->tokens[i+1].type == TKN_WRD_IMM &&
@@ -212,7 +212,7 @@ void apply_psh2_2wrd_imm(token_table_t *tknzr, token_table_t *tknzr2, size_t *i)
 	
 }
 
-int match_psh2_wrd_word(token_table_t *tknzr, size_t i)
+bool match_psh2_wrd_word(token_table_t *tknzr, size_t i)
 {
 	return tknzr->tokens[i].type == TKN_PSH_WORD &&
 		   tknzr->tokens[i+1].type == TKN_WRD_WORD_IMM;

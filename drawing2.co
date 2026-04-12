@@ -54,13 +54,18 @@ check_input:
 	POP
 	RTS
 
+cleanup:
+	PSH 1
+	WRD $FF
+	RTS
+
 W_KEY:
 	POP
 	RDD scr_ptr1
 	SUB 32
 	WRD scr_ptr1
 	JCC w_w_c
-	RTS
+	JMP cleanup
 w_w_c:	
 	RDD scr_ptr2
 	DEC
@@ -68,12 +73,12 @@ w_w_c:
 	SUB 1
 	JZ w_reset_hi
 	WRD scr_ptr2	
-	RTS
+	JMP cleanup
 w_reset_hi:
 	POP
 	PSH 5
 	WRD scr_ptr2
-	RTS
+	JMP cleanup
 
 
 S_KEY:
@@ -82,20 +87,20 @@ S_KEY:
 	ADD 32
 	WRD scr_ptr1
 	JCS s_w_c
-	RTS
+	JMP cleanup
 s_w_c:	
 	RDD scr_ptr2
 	INC
 	DUP
 	SUB 6
 	JZ s_reset_hi
-	WRD scr_ptr2	
-	RTS
+	WRD scr_ptr2
+	JMP cleanup
 s_reset_hi:
 	POP
 	PSH 2
 	WRD scr_ptr2
-	RTS
+	JMP cleanup
 
 A_KEY:
 	POP
@@ -105,12 +110,12 @@ A_KEY:
 	SUB $FF
 	JZ a_res 
 	WRD scr_ptr1
-	RTS
+	JMP cleanup
 a_res:
 	POP
 	PSH 31
 	WRD scr_ptr1
-	RTS
+	JMP cleanup
 
 D_KEY:
 	POP
@@ -120,9 +125,9 @@ D_KEY:
 	SUB 32
 	JZ d_res 
 	WRD scr_ptr1
-	RTS
+	JMP cleanup
 d_res:
 	POP
 	PSH 0
 	WRD scr_ptr1
-	RTS
+	JMP cleanup

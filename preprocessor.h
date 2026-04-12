@@ -1,7 +1,7 @@
 #include "tokenizing.h"
 #include <stddef.h>
 
-#define MAX_ITERATIONS_FOR_MACRO 100
+#define MAX_ITERATIONS_FOR_MACRO 1000
 
 void parse_macros(tokenizer_t* tknzr);
 void push_macro(preprocessor_t *prep, func_macro_t fm);

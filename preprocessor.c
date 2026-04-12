@@ -497,6 +497,44 @@ void preprocess(tokenizer_t *tknzr)
 				{
 					debug_tkn_tbl(args_num[j]);
 				}
+				{
+					token_table_t bdy_tmp = init_tt();
+					for(size_t l = 0; l < cpy_bdy.size; l++)
+					{
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "USE_LABEL"))
+						{
+							token_t next_token = cpy_bdy.tokens[l+1];
+						
+							char* label = malloc(strlen(next_token.tkn_str)+strlen(fm.name)+10);
+							snprintf(label, strlen(next_token.tkn_str)+strlen(fm.name)+10, "%s_%s_%zu", fm.name, next_token.tkn_str, fm.amount);
+							token_t tkn_push = {.type = TKN_LABEL};
+							strcpy(tkn_push.tkn_str, label);
+							push_token(&bdy_tmp, tkn_push);
+						
+							l += 1;
+							continue;
+						}
+						else if(!strcmp(cpy_bdy.tokens[l].tkn_str, "LABEL"))
+						{
+							token_t next_token = cpy_bdy.tokens[l+1];
+							
+							char* label = malloc(strlen(next_token.tkn_str)+strlen(fm.name)+10);
+							snprintf(label, strlen(next_token.tkn_str)+strlen(fm.name)+10, "%s_%s_%zu:", fm.name, next_token.tkn_str, fm.amount);
+							token_t tkn_push = {.type = TKN_LABEL};
+							strcpy(tkn_push.tkn_str, label);
+							push_token(&bdy_tmp, tkn_push);
+							
+							l += 1;
+							continue;
+						}
+						else
+						{
+							push_token(&bdy_tmp, cpy_bdy.tokens[l]); 
+						}
+					}
+					free(cpy_bdy.tokens);
+					cpy_bdy = bdy_tmp;
+				}
 				for(size_t k = 0; k < fm.arg_count; k++)
 				{
 					token_table_t bdy_tmp = init_tt();
@@ -504,37 +542,17 @@ void preprocess(tokenizer_t *tknzr)
 					for(size_t l = 0; l < cpy_bdy.size; l++)
 					{
 
-						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "USE_LABEL"))
+						
+						if(!strcmp(cpy_bdy.tokens[l].tkn_str, fm.args[k]))
 						{
-
-							token_t next_token = cpy_bdy.tokens[l+1];
-							
-							char* label = malloc(strlen(next_token.tkn_str)+10);
-							snprintf(label, strlen(next_token.tkn_str)+10, "%s_%zu", next_token.tkn_str, fm.amount);
-							token_t tkn_push = {.type = TKN_LABEL};
-							strcpy(tkn_push.tkn_str, label);
-							push_token(&bdy_tmp, tkn_push);
-							
-							l += 1;
-							continue;
+							for(size_t m = 0; m < args_num[k].size; m++)
+							{
+								push_token(&bdy_tmp, args_num[k].tokens[m]);
+								is_used = 1;
+							}
 						}
-						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "LABEL"))
+						else if(!strcmp(cpy_bdy.tokens[l].tkn_str, "ARG_LABEL"))
 						{
-
-							token_t next_token = cpy_bdy.tokens[l+1];
-							
-							char* label = malloc(strlen(next_token.tkn_str)+10);
-							snprintf(label, strlen(next_token.tkn_str)+10, "%s_%zu:", next_token.tkn_str, fm.amount);
-							token_t tkn_push = {.type = TKN_LABEL};
-							strcpy(tkn_push.tkn_str, label);
-							push_token(&bdy_tmp, tkn_push);
-							
-							l += 1;
-							continue;
-						}
-						if(!strcmp(cpy_bdy.tokens[l].tkn_str, "ARG_LABEL"))
-						{
-
 							token_t next_token = cpy_bdy.tokens[l+1];
 							token_t label_token = {0};
 							for(size_t m = 0; m < fm.arg_count; m++)
@@ -553,14 +571,6 @@ void preprocess(tokenizer_t *tknzr)
 							
 							l += 1;
 							continue;
-						}
-						if(!strcmp(cpy_bdy.tokens[l].tkn_str, fm.args[k]))
-						{
-							for(size_t m = 0; m < args_num[k].size; m++)
-							{
-								push_token(&bdy_tmp, args_num[k].tokens[m]);
-								is_used = 1;
-							}
 						}
 						else
 						{

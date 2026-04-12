@@ -1,16 +1,26 @@
-@macro FOR(i, start, end, label, body)
-	PSH start
-	WRD i
-	LABEL label
-	body
+@macro FOR(i, start, end, body)
+        PSH start
+        WRD i
+        LABEL loop
+        body
 
-	RDD i
-	INC
-	DUP
-	WRD i
-	SUB end
-	JNZ label
+        RDD i
+        INC
+        DUP
+        WRD i
+        LE end
+        JNZ USE_LABEL loop
 @macro_end
+
+@macro WHILE(cond, body)
+	LABEL start
+	cond
+	JZ USE_LABEL loop
+	body
+	JMP USE_LABEL start
+	LABEL loop
+@macro_end
+
 
 @macro DRAW()
 	PSH 1
@@ -19,6 +29,6 @@
 
 PSH $2
 WRD $301
-FOR($300, 0, 16, loop, RDD $300 RDD $300 RDD $301 WRD)
+FOR($300, 0, 16, RDD $300 RDD $300 RDD $301 WRD)
 DRAW()
 TRAP: JMP TRAP

@@ -1,0 +1,412 @@
+
+
+@def FP $1
+
+@macro GET_SP()
+	ASM
+	{
+	txa
+	jsr OP_PUSH
+	}
+@macro_end
+
+@macro SET_SP()
+	ASM
+	{
+	jsr OP_POP
+	tax
+	}
+@macro_end
+
+@macro PROLOGUE()
+	ASM
+	{
+	lda $1
+	pha
+	dex
+	txa
+	sec
+	sbc $700, X
+	sta $1
+	}
+@macro_end
+
+@macro EPILOGUE()
+	ASM
+	{
+	dex
+	lda $1
+	clc
+	adc $700, X
+	tax
+	pla
+	sta $1
+	}
+@macro_end
+
+@macro PEEK_LOCAL(idx)
+	RDD FP
+	PSH idx
+	ADD
+	PEEK
+@macro_end
+
+@macro POKE_LOCAL_I(idx, val)
+	PSH val
+	RDD FP
+	PSH idx
+	ADD
+	POKE
+@macro_end
+
+
+@macro POKE_LOCAL(idx)
+	RDD FP
+	PSH idx
+	ADD
+	POKE
+@macro_end
+
+@macro PEEK_LOCAL_W(idx)
+	RDD FP
+	PSH idx*2
+	ADD
+	PEEK_W
+@macro_end
+
+@macro POKE_LOCAL_I_W(idx, val)
+	PSH_W val
+	RDD FP
+	PSH idx*2
+	ADD
+	POKE_W
+@macro_end
+
+
+@macro POKE_LOCAL_W(idx)
+	RDD FP
+	PSH idx*2
+	ADD
+	POKE_W
+@macro_end
+
+
+
+@macro CALL(name, args_count)
+	PSH args_count
+	jsr name
+@macro_end
+
+@macro CALL_W(name, args_count)
+	PSH args_count*2
+	jsr name
+@macro_end
+
+
+@macro FUNC(name, ret_count, body)
+	ARG_LABEL name
+	PROLOGUE()
+	body
+	PSH ret_count
+	EPILOGUE()
+	RTS
+@macro_end
+
+
+@macro FUNC_W(name, ret_count, body)
+	ARG_LABEL name
+	PROLOGUE()
+	body
+	PSH ret_count*2
+	EPILOGUE()
+	RTS
+@macro_end
+
+
+@macro DRAW()
+	PSH 1
+	WRD $2001
+@macro_end
+
+@macro CALL_SSF(x, y, ref_c, fill_c) 
+ PSH x
+ PSH y
+ PSH ref_c
+ PSH fill_c
+	CALL(ssf, 4)
+@macro_end
+
+@macro WHILE(cond, body)
+	LABEL start
+	cond
+	JZ USE_LABEL loop
+	body
+	JMP USE_LABEL start
+	LABEL loop
+@macro_end
+
+@def UP $10
+@def DOWN $11
+@def HEAD $12
+
+@def CUR_X $13
+@def CUR_Y $14
+@def fill_col $15
+@def ref_col $16
+
+@def SCREEN $200
+@def STACK_2 $800
+
+@macro PUSH_ONTO_STACK_2()
+	PSH STACK_2
+	SWP
+	RDD HEAD
+	ADD
+	SWP
+	WRD_W
+ASM
+{
+	inc $12
+	inc $12
+}
+@macro_end
+
+@macro POP_FROM_STACK_2()
+ASM
+{
+	dec $12
+	dec $12
+}
+	PSH STACK_2
+	SWP
+	RDD HEAD
+	ADD
+	SWP
+	RDD_W
+@macro_end
+
+@macro ASL_W()
+ASM
+{
+	dex
+	lda $6FF, X
+	asl A
+	sta $6FF, X
+	lda $700, X
+	rol A
+	sta $700, X
+	inx
+}
+@macro_end
+
+@macro SCREEN_COORD()
+	PSH 0
+	SWP
+	PSH 0
+	ASL_W()
+	ASL_W()
+	ASL_W()
+	ASL_W()
+	ASL_W()
+	ADD_W
+	PSH SCREEN
+	ADD_W
+@macro_end
+
+@macro FOR(i, start, end, body)
+	PSH start
+	WRD i
+	LABEL loop
+	body
+
+	RDD i
+	INC
+	DUP
+	WRD i
+	LE end
+	JNZ USE_LABEL loop
+@macro_end
+
+
+@macro DRAW_LINE(col, hi, lo)
+	FOR($3, 0, 10,
+	PSH col
+	RDD $3
+	PSH lo
+	ADD
+	PSH hi
+	WRD
+	)
+@macro_end
+
+DRAW_LINE($E7, $2, $20*3)
+DRAW_LINE($E7, $3, $20*3)
+ASM
+{
+	lda #$E7
+
+	sta $280
+	sta $289
+	
+	sta $2A0
+	sta $2A9
+	
+	sta $2C0
+	sta $2C9
+	
+	sta $2E0
+	sta $2E9
+	
+	sta $300
+	sta $309
+	
+
+	sta $320
+	sta $329
+
+	sta $340
+	sta $349
+	
+}
+
+DRAW()
+CALL_SSF(4, 7, $0, $E0)
+
+TRAP: JMP TRAP
+
+FUNC(ssf, 0,
+ OVR OVR
+ SUB
+ JZ ret_ssf
+ PSH 0
+ WRD UP
+	PSH 0
+	WRD DOWN
+	PSH 0
+	WRD HEAD
+	PEEK_LOCAL(2)
+	WRD ref_col
+	PEEK_LOCAL(3)
+	WRD fill_col
+	PEEK_LOCAL(0)
+	PEEK_LOCAL(1)
+	PUSH_ONTO_STACK_2()
+	looping:
+	WHILE(RDD HEAD,
+	POP_FROM_STACK_2()
+	
+	WRD CUR_Y
+	WRD CUR_X
+
+	WHILE(PSH 1,
+		RDD CUR_X RDD CUR_Y
+		SCREEN_COORD()
+		RDD
+		RDD ref_col
+		SUB
+		JNZ START_OF_LINE
+		RDD CUR_X
+		DEC 
+		WRD CUR_X
+	)
+	START_OF_LINE:
+	RDD CUR_X
+	INC
+	WRD CUR_X
+
+	WHILE(
+	RDD CUR_X RDD CUR_Y
+	SCREEN_COORD()
+	RDD
+	RDD ref_col
+	EQ,
+	
+		RDD CUR_X RDD CUR_Y
+	
+		CALL(CHECK_X_AND_Y, 2)
+		JZ looping
+		
+		RDD CUR_X RDD CUR_Y
+		SCREEN_COORD()
+		
+		RDD fill_col
+		SWP ROT SWP
+		WRD
+		RDD DOWN
+		JNZ PRECONT
+	
+		RDD CUR_X RDD CUR_Y
+		INC
+		SCREEN_COORD() 
+		RDD ref_col
+		SWP ROT SWP
+		RDD
+		SUB
+		JZ ADD_LOW
+		JMP PRECONT
+	ADD_LOW:        
+		RDD CUR_X
+		RDD CUR_Y
+		INC
+		OVR OVR
+		CALL(CHECK_X_AND_Y, 2)
+		JZ CONTINUE
+	
+		PUSH_ONTO_STACK_2()
+		PSH 1
+		WRD DOWN
+	PRECONT:        
+		PSH 1
+		PSH 1
+	CONTINUE:
+		POP POP
+		RDD UP
+		JNZ PRECONT_2
+	
+		RDD CUR_X RDD CUR_Y
+		DEC 
+		SCREEN_COORD()
+		RDD ref_col
+		SWP ROT SWP
+		RDD
+		SUB
+		JZ ADD_HIGH
+		JMP PRECONT_2
+	ADD_HIGH:
+		RDD CUR_X
+		RDD CUR_Y
+		DEC
+		OVR OVR
+		CALL(CHECK_X_AND_Y, 2)
+		JZ CONTINUE_2
+	
+		PUSH_ONTO_STACK_2()
+		PSH 1
+		WRD UP
+	PRECONT_2:
+		PSH 1
+		PSH 1
+	CONTINUE_2:
+		POP POP
+		RDD CUR_X
+		INC
+		WRD CUR_X
+	)
+		
+	PSH 0
+	WRD DOWN
+	PSH 0
+	WRD UP
+	DRAW()
+	)
+ret_ssf:
+) 
+
+FUNC(CHECK_X_AND_Y, 1,
+	LT 32
+	DUP JZ check_exit
+	POP
+	LT 32
+	check_exit:
+	POKE_LOCAL(0)
+)  

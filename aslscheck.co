@@ -1,0 +1,42 @@
+@macro ASL_W()
+ASM
+{
+        dex
+        lda $6FF, X
+        asl A
+        sta $6FF, X
+        lda $700, X
+        rol A
+        sta $700, X
+        inx
+}
+@macro_end
+
+@def SCREEN $200
+
+
+@macro SCREEN_COORD()
+        PSH 0
+        SWP
+        PSH 0
+        ASL_W()
+        ASL_W()
+        ASL_W()
+        ASL_W()
+        ASL_W()
+        ADD_W
+        PSH SCREEN
+        ADD_W
+@macro_end
+
+
+PSH $FF
+
+PSH 3
+PSH 12
+
+SCREEN_COORD()
+WRD
+PSH 1
+WRD $2001
+TRAP: JMP TRAP
