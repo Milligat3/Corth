@@ -1,4 +1,7 @@
 # Corth
+
+## STILL NOT FULL DOCUMENTATION
+
 Stack-based assembly-like language for 6502 implemented in C. (CorthCOMP.c)
 
 Has nothing much for now:
